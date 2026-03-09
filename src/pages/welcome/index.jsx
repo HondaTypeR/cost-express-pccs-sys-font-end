@@ -172,6 +172,7 @@ const Welcome = () => {
         hoverable={hasPending}
         style={{
           width: "100%",
+          height: 120,
           textAlign: "left",
           background: hasPending
             ? theme.bg || "linear-gradient(135deg, #faad14 0%, #ffd666 100%)"
@@ -182,7 +183,7 @@ const Welcome = () => {
           opacity: hasPending ? 1 : 0.8,
           transition: "all .2s ease",
         }}
-        bodyStyle={{ padding: 16 }}
+        bodyStyle={{ padding: 16, height: "100%" }}
         onClick={hasPending && onClick ? onClick : undefined}
       >
         <div
@@ -203,19 +204,18 @@ const Welcome = () => {
             lineHeight: 1.1,
           }}
         >
-          {hasPending ? count : "暂无审批单"}
+          {hasPending ? count : "0"}
         </div>
-        {hasPending && (
-          <div
-            style={{
-              marginTop: 6,
-              fontSize: 12,
-              color: "rgba(255,255,255,0.95)",
-            }}
-          >
-            点击查看审批列表
-          </div>
-        )}
+        <div
+          style={{
+            marginTop: 6,
+            fontSize: 12,
+            color: hasPending ? "rgba(255,255,255,0.95)" : "transparent",
+            visibility: hasPending ? "visible" : "hidden",
+          }}
+        >
+          点击查看审批列表
+        </div>
       </Card>
     );
   };

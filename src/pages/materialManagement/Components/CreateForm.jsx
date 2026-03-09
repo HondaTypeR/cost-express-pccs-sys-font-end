@@ -68,8 +68,6 @@ const CreateForm = (props) => {
             setTotalPrice(0);
           },
           destroyOnClose: true,
-          maskClosable: false,
-          keyboard: false,
         }}
         onFinish={async (value) => {
           const selectedProject = projects.find(

@@ -44,10 +44,16 @@ const Contract = () => {
 
     const columns = [
         {
+            title: "合同ID",
+            dataIndex: "contract_id",
+            width: 100,
+        },
+        {
             title: "归属项目",
             dataIndex: "project_id",
             width: 200,
             valueType: "select",
+            hideInSearch: true,
             fieldProps: {
                 options: projects,
             },
@@ -65,6 +71,7 @@ const Contract = () => {
             title: "甲方",
             dataIndex: "party_a",
             width: 200,
+            hideInSearch: true,
         },
         {
             title: "乙方",
@@ -80,18 +87,21 @@ const Contract = () => {
             dataIndex: "contract_amount",
             valueType: "money",
             width: 150,
+            hideInSearch: true,
         },
         {
             title: "已付款金额",
             dataIndex: "account_paid",
             valueType: "money",
             width: 150,
+            hideInSearch: true,
         },
         {
             title: "未付款金额",
             dataIndex: "wait_account_paid",
             valueType: "money",
             width: 150,
+            hideInSearch: true,
         },
         {
             title: "期限",
@@ -111,6 +121,7 @@ const Contract = () => {
             dataIndex: "project_content",
             width: 200,
             ellipsis: true,
+            hideInSearch: true,
         },
         {
             title: "类型",
@@ -188,7 +199,7 @@ const Contract = () => {
                     title="确认删除"
                     description="确定要删除这条合同记录吗？删除后无法恢复。"
                     onConfirm={async () => {
-                        const res = await deleteContract({ contract_id: record.contract_id });
+                        const res = await deleteContract({ contract_id: record.contract_id, party_b_id: record.party_b_id });
                         if (res.code === 200) {
                             message.success("删除成功");
                             actionRef.current?.reload();
@@ -234,11 +245,11 @@ const Contract = () => {
                     />,
                 ]}
                 request={async (params, sort, filter) => {
-                    const res = await listContract({
-                        ...params,
-                        page: params.current,
-                        pageSize: params.pageSize,
-                    });
+                    const { current, pageSize, ...searchParams } = params;
+                    const requestParams = {
+                        ...searchParams,
+                    };
+                    const res = await listContract(requestParams);
                     return {
                         data: res.data || [],
                         success: res.code === 200,

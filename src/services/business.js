@@ -56,9 +56,13 @@ export async function updateContract(body, options) {
     });
 }
 
-export async function listContract(options) {
+export async function listContract(body, options) {
     return request('/api/contract/list', {
-        method: 'GET',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        data: body,
         ...(options || {}),
     });
 }

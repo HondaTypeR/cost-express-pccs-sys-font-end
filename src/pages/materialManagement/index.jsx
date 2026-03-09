@@ -240,8 +240,8 @@ const MaterialManagement = () => {
           />,
         ];
 
-        // 只有状态为草稿时，显示编辑、删除和发起审批按钮
-        if (record.document_status === 0) {
+        // 只有状态为草稿时且当前登录用户是经办人时，显示编辑、删除和发起审批按钮
+        if (record.document_status === 0 && currentUser?.id == record.handler) {
           actions.push(
             <UpdateForm
               key="edit"
@@ -255,32 +255,29 @@ const MaterialManagement = () => {
             />
           );
 
-          // 只有当前登录用户是经办人时，显示发起审批按钮
-          if (currentUser?.id == record.handler) {
-            actions.push(
-              <ApprovalModal
-                key="approval"
-                trigger={<a>发起审批</a>}
-                users={users}
-                currentStatus={record.document_status}
-                onOk={async (reviewerId) => {
-                  const res = await submitApproval({
-                    material_code: record.material_code,
-                    document_status: record.document_status + 1,
-                    user_id: reviewerId,
-                  });
-                  if (res.code === 200) {
-                    message.success(res?.msg || "审批发起成功");
-                    actionRef.current?.reload();
-                    return true;
-                  } else {
-                    message.error(res?.msg || "审批发起失败");
-                    return false;
-                  }
-                }}
-              />
-            );
-          }
+          actions.push(
+            <ApprovalModal
+              key="approval"
+              trigger={<a>发起审批</a>}
+              users={users}
+              currentStatus={record.document_status}
+              onOk={async (reviewerId) => {
+                const res = await submitApproval({
+                  material_code: record.material_code,
+                  document_status: record.document_status + 1,
+                  user_id: reviewerId,
+                });
+                if (res.code === 200) {
+                  message.success(res?.msg || "审批发起成功");
+                  actionRef.current?.reload();
+                  return true;
+                } else {
+                  message.error(res?.msg || "审批发起失败");
+                  return false;
+                }
+              }}
+            />
+          );
 
           actions.push(
             <Popconfirm
@@ -426,6 +423,80 @@ const MaterialManagement = () => {
         }}
         columns={columns}
         scroll={{ x: 1600 }}
+        summary={(pageData) => {
+          let totalQuantity = 0;
+          let totalUnitPrice = 0;
+          let totalPrice = 0;
+          let totalAccountPaid = 0;
+          let totalWaitAccountPaid = 0;
+
+          pageData.forEach(
+            ({
+              quantity,
+              unit_price,
+              total_price,
+              account_paid,
+              wait_account_paid,
+            }) => {
+              totalQuantity += Number(quantity) || 0;
+              totalUnitPrice += Number(unit_price) || 0;
+              totalPrice += Number(total_price) || 0;
+              totalAccountPaid += Number(account_paid) || 0;
+              totalWaitAccountPaid += Number(wait_account_paid) || 0;
+            }
+          );
+
+          return (
+            <>
+              <ProTable.Summary.Row>
+                <ProTable.Summary.Cell index={0} colSpan={4}>
+                  <strong>合计</strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={4} />
+                <ProTable.Summary.Cell index={5}>
+                  <strong>{totalQuantity.toLocaleString()}</strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={6}>
+                  <strong>
+                    ¥
+                    {totalUnitPrice.toLocaleString("zh-CN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={7}>
+                  <strong>
+                    ¥
+                    {totalPrice.toLocaleString("zh-CN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={8}>
+                  <strong>
+                    ¥
+                    {totalAccountPaid.toLocaleString("zh-CN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={9}>
+                  <strong>
+                    ¥
+                    {totalWaitAccountPaid.toLocaleString("zh-CN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={10} colSpan={5} />
+              </ProTable.Summary.Row>
+            </>
+          );
+        }}
       />
     </PageContainer>
   );

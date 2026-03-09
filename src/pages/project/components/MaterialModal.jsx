@@ -1,6 +1,6 @@
 import { EditableProTable } from "@ant-design/pro-components";
 import { Modal } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const MaterialModal = (props) => {
   const {
@@ -21,6 +21,14 @@ const MaterialModal = (props) => {
   const [supplierDataSource, setSupplierDataSource] = useState(
     supplierData || {}
   );
+
+  useEffect(() => {
+    setDataSource(materialData || {});
+  }, [materialData, open]);
+
+  useEffect(() => {
+    setSupplierDataSource(supplierData || {});
+  }, [supplierData, open]);
 
   const typeConfig = {
     material: { title: "材料信息", nameLabel: "材料名称" },
@@ -156,8 +164,11 @@ const MaterialModal = (props) => {
       : []),
   ];
 
-  const handleOk = () => {
-    onSave?.(dataSource);
+  const handleOk = async () => {
+    const result = await onSave?.(dataSource);
+    if (result === false) {
+      return;
+    }
     onSaveSupplier?.(supplierDataSource);
     onCancel?.();
   };
@@ -431,36 +442,6 @@ const MaterialModal = (props) => {
                     }
               }
               pagination={false}
-            />
-            <h4 style={{ marginTop: 24, marginBottom: 16 }}>供应商信息</h4>
-            <EditableProTable
-              rowKey="id"
-              columns={supplierColumns}
-              value={supplierDataSource[phase] || []}
-              onChange={(newData) =>
-                handleSupplierDataSourceChange(phase, newData)
-              }
-              recordCreatorProps={
-                readonly
-                  ? false
-                  : {
-                      position: "bottom",
-                      record: () => ({ id: Math.random() }),
-                      newRecordType: "dataSource",
-                      creatorButtonText: "添加一行",
-                    }
-              }
-              editable={
-                readonly
-                  ? false
-                  : {
-                      editableKeys: supplierEditableKeys[phase] || [],
-                      onChange: (keys) =>
-                        handleSupplierEditableKeysChange(phase, keys),
-                    }
-              }
-              pagination={false}
-              scroll={{ x: 1400 }}
             />
           </div>
         ))

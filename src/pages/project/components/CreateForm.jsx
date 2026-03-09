@@ -46,6 +46,8 @@ const CreateForm = (props) => {
   const [machineryModalOpen, setMachineryModalOpen] = useState(false);
   const [laborModalOpen, setLaborModalOpen] = useState(false);
   const [costModalOpen, setCostModalOpen] = useState(false);
+
+  // 行级数据（表格行内按钮使用）
   const [materialData, setMaterialData] = useState({});
   const [machineryData, setMachineryData] = useState({});
   const [laborData, setLaborData] = useState({});
@@ -54,6 +56,20 @@ const CreateForm = (props) => {
   const [machinerySupplierData, setMachinerySupplierData] = useState({});
   const [laborSupplierData, setLaborSupplierData] = useState({});
   const [costSupplierData, setCostSupplierData] = useState({});
+
+  // 全局数据（顶部按钮使用）
+  const [globalMaterialData, setGlobalMaterialData] = useState({});
+  const [globalMachineryData, setGlobalMachineryData] = useState({});
+  const [globalLaborData, setGlobalLaborData] = useState({});
+  const [globalCostData, setGlobalCostData] = useState({});
+  const [globalMaterialSupplierData, setGlobalMaterialSupplierData] = useState(
+    {}
+  );
+  const [globalMachinerySupplierData, setGlobalMachinerySupplierData] =
+    useState({});
+  const [globalLaborSupplierData, setGlobalLaborSupplierData] = useState({});
+  const [globalCostSupplierData, setGlobalCostSupplierData] = useState({});
+
   const [selectedPhases, setSelectedPhases] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [currentRowId, setCurrentRowId] = useState(null);
@@ -67,6 +83,90 @@ const CreateForm = (props) => {
     };
     fetchSuppliers();
   }, []);
+
+  // 计算数据的预算总价
+  const calculateTotalBudget = (data) => {
+    if (!data || typeof data !== "object") return 0;
+
+    let total = 0;
+    Object.keys(data).forEach((phase) => {
+      const phaseData = data[phase] || [];
+      phaseData.forEach((item) => {
+        total += parseFloat(item.budget_total_price || 0);
+      });
+    });
+    return total;
+  };
+
+  // 验证四项总和是否超过预算限额
+  const validateBudgetLimit = (type, newData) => {
+    let budgetLimit;
+    let limitName;
+
+    if (currentRowId) {
+      // 行级验证：四项总和不能超过当前行的预算造价
+      const currentRow = dataSource.find((row) => row.id === currentRowId);
+      if (!currentRow || !currentRow.budget_cost) {
+        message.warning("请先输入当前行的预算造价");
+        return false;
+      }
+      budgetLimit = currentRow.budget_cost;
+      limitName = "当前行预算造价";
+    } else {
+      // 全局验证：四项总和不能超过预算总造价
+      const budgetTotalCost =
+        formRef.current?.getFieldValue("budget_total_cost");
+      if (!budgetTotalCost) {
+        message.warning("请先输入预算总造价");
+        return false;
+      }
+      budgetLimit = budgetTotalCost;
+      limitName = "预算总造价";
+    }
+
+    // 计算当前四项的总和（使用最新数据）
+    const materialTotal =
+      type === "material"
+        ? calculateTotalBudget(newData)
+        : calculateTotalBudget(
+            currentRowId ? materialData[currentRowId] : globalMaterialData
+          );
+
+    const machineryTotal =
+      type === "machinery"
+        ? calculateTotalBudget(newData)
+        : calculateTotalBudget(
+            currentRowId ? machineryData[currentRowId] : globalMachineryData
+          );
+
+    const laborTotal =
+      type === "labor"
+        ? calculateTotalBudget(newData)
+        : calculateTotalBudget(
+            currentRowId ? laborData[currentRowId] : globalLaborData
+          );
+
+    const costTotal =
+      type === "cost"
+        ? calculateTotalBudget(newData)
+        : calculateTotalBudget(
+            currentRowId ? costData[currentRowId] : globalCostData
+          );
+
+    const fourItemsTotal =
+      materialTotal + machineryTotal + laborTotal + costTotal;
+
+    if (fourItemsTotal > budgetLimit) {
+      message.error(
+        `材料、机械、人工、费用四项预算总价之和（${fourItemsTotal.toFixed(
+          2
+        )}元）不能超过${limitName}（${budgetLimit}元）`
+      );
+      return false;
+    }
+
+    return true;
+  };
 
   const columns = [
     {
@@ -176,6 +276,12 @@ const CreateForm = (props) => {
             marginLeft: "8px",
           }}
           onClick={() => {
+            const budgetTotalCost =
+              formRef.current?.getFieldValue("budget_total_cost");
+            if (!budgetTotalCost) {
+              message.warning("请先填写预算总造价");
+              return;
+            }
             const phases = formRef.current?.getFieldValue("phase_num");
             if (!phases || phases.length === 0) {
               message.warning("请先选择期数");
@@ -193,6 +299,12 @@ const CreateForm = (props) => {
           color="red"
           style={{ width: "50px", cursor: "pointer", textAlign: "center" }}
           onClick={() => {
+            const budgetTotalCost =
+              formRef.current?.getFieldValue("budget_total_cost");
+            if (!budgetTotalCost) {
+              message.warning("请先填写预算总造价");
+              return;
+            }
             const phases = formRef.current?.getFieldValue("phase_num");
             if (!phases || phases.length === 0) {
               message.warning("请先选择期数");
@@ -209,6 +321,12 @@ const CreateForm = (props) => {
           key="labor"
           style={{ width: "50px", cursor: "pointer", textAlign: "center" }}
           onClick={() => {
+            const budgetTotalCost =
+              formRef.current?.getFieldValue("budget_total_cost");
+            if (!budgetTotalCost) {
+              message.warning("请先填写预算总造价");
+              return;
+            }
             const phases = formRef.current?.getFieldValue("phase_num");
             if (!phases || phases.length === 0) {
               message.warning("请先选择期数");
@@ -225,6 +343,12 @@ const CreateForm = (props) => {
           key="cost"
           style={{ width: "50px", cursor: "pointer", textAlign: "center" }}
           onClick={() => {
+            const budgetTotalCost =
+              formRef.current?.getFieldValue("budget_total_cost");
+            if (!budgetTotalCost) {
+              message.warning("请先填写预算总造价");
+              return;
+            }
             const phases = formRef.current?.getFieldValue("phase_num");
             if (!phases || phases.length === 0) {
               message.warning("请先选择期数");
@@ -255,27 +379,82 @@ const CreateForm = (props) => {
         grid={true}
         drawerProps={{
           destroyOnClose: true,
-          maskClosable: false,
-          keyboard: false,
         }}
         onFinish={async (value) => {
-          // 将材料、机械、人工、费用数据合并到每一行的 dataSource 中
+          // 最终提交前验证全局数据的四项总和
+          const budgetTotalCost = value.budget_total_cost;
+
+          // 验证全局数据的四项总和不超过预算总造价
+          const globalMaterialTotal = calculateTotalBudget(globalMaterialData);
+          const globalMachineryTotal =
+            calculateTotalBudget(globalMachineryData);
+          const globalLaborTotal = calculateTotalBudget(globalLaborData);
+          const globalCostTotal = calculateTotalBudget(globalCostData);
+          const globalFourItemsTotal =
+            globalMaterialTotal +
+            globalMachineryTotal +
+            globalLaborTotal +
+            globalCostTotal;
+
+          if (globalFourItemsTotal > budgetTotalCost) {
+            message.error(
+              `全局四项预算总价之和（${globalFourItemsTotal.toFixed(
+                2
+              )}元）不能超过预算总造价（${budgetTotalCost}元）`
+            );
+            return false;
+          }
+
+          // 验证每一行的四项总和不超过该行的预算造价
+          for (const row of dataSource) {
+            if (!row.budget_cost) continue;
+
+            const rowMaterialTotal = calculateTotalBudget(materialData[row.id]);
+            const rowMachineryTotal = calculateTotalBudget(
+              machineryData[row.id]
+            );
+            const rowLaborTotal = calculateTotalBudget(laborData[row.id]);
+            const rowCostTotal = calculateTotalBudget(costData[row.id]);
+            const rowFourItemsTotal =
+              rowMaterialTotal +
+              rowMachineryTotal +
+              rowLaborTotal +
+              rowCostTotal;
+
+            if (rowFourItemsTotal > row.budget_cost) {
+              message.error(
+                `行"${
+                  row.position || row.phase_num
+                }"的四项预算总价之和（${rowFourItemsTotal.toFixed(
+                  2
+                )}元）不能超过该行预算造价（${row.budget_cost}元）`
+              );
+              return false;
+            }
+          }
+
+          // 将行级材料、机械、人工、费用数据合并到每一行的 dataSource 中
           const enrichedDataSource = dataSource.map((row) => ({
             ...row,
             material: materialData[row.id] || {},
             machinery: machineryData[row.id] || {},
             labor: laborData[row.id] || {},
             cost: costData[row.id] || {},
-            material_supplier: materialSupplierData[row.id] || {},
-            machinery_supplier: machinerySupplierData[row.id] || {},
-            labor_supplier: laborSupplierData[row.id] || {},
-            cost_supplier: costSupplierData[row.id] || {},
           }));
+
+          // 全局数据（顶部4个按钮的数据）
+          const globalData = {
+            material: globalMaterialData,
+            machinery: globalMachineryData,
+            labor: globalLaborData,
+            cost: globalCostData,
+          };
 
           const params = {
             ...value,
             phase_num: value?.phase_num?.join(","),
             additional_info1: JSON.stringify(enrichedDataSource),
+            additional_info2: JSON.stringify(globalData),
           };
           const res = await addProject(params);
 
@@ -465,11 +644,18 @@ const CreateForm = (props) => {
               color="blue"
               style={{ width: "60px", cursor: "pointer", textAlign: "center" }}
               onClick={() => {
+                const budgetTotalCost =
+                  formRef.current?.getFieldValue("budget_total_cost");
+                if (!budgetTotalCost) {
+                  message.warning("请先填写预算总造价");
+                  return;
+                }
                 const phases = formRef.current?.getFieldValue("phase_num");
                 if (!phases || phases.length === 0) {
                   message.warning("请先选择期数");
                   return;
                 }
+                setCurrentRowId(null);
                 setSelectedPhases(phases);
                 setMaterialModalOpen(true);
               }}
@@ -480,11 +666,18 @@ const CreateForm = (props) => {
               color="red"
               style={{ width: "60px", cursor: "pointer", textAlign: "center" }}
               onClick={() => {
+                const budgetTotalCost =
+                  formRef.current?.getFieldValue("budget_total_cost");
+                if (!budgetTotalCost) {
+                  message.warning("请先填写预算总造价");
+                  return;
+                }
                 const phases = formRef.current?.getFieldValue("phase_num");
                 if (!phases || phases.length === 0) {
                   message.warning("请先选择期数");
                   return;
                 }
+                setCurrentRowId(null);
                 setSelectedPhases(phases);
                 setMachineryModalOpen(true);
               }}
@@ -494,11 +687,18 @@ const CreateForm = (props) => {
             <Tag
               style={{ width: "60px", cursor: "pointer", textAlign: "center" }}
               onClick={() => {
+                const budgetTotalCost =
+                  formRef.current?.getFieldValue("budget_total_cost");
+                if (!budgetTotalCost) {
+                  message.warning("请先填写预算总造价");
+                  return;
+                }
                 const phases = formRef.current?.getFieldValue("phase_num");
                 if (!phases || phases.length === 0) {
                   message.warning("请先选择期数");
                   return;
                 }
+                setCurrentRowId(null);
                 setSelectedPhases(phases);
                 setLaborModalOpen(true);
               }}
@@ -508,11 +708,18 @@ const CreateForm = (props) => {
             <Tag
               style={{ width: "60px", cursor: "pointer", textAlign: "center" }}
               onClick={() => {
+                const budgetTotalCost =
+                  formRef.current?.getFieldValue("budget_total_cost");
+                if (!budgetTotalCost) {
+                  message.warning("请先填写预算总造价");
+                  return;
+                }
                 const phases = formRef.current?.getFieldValue("phase_num");
                 if (!phases || phases.length === 0) {
                   message.warning("请先选择期数");
                   return;
                 }
+                setCurrentRowId(null);
                 setSelectedPhases(phases);
                 setCostModalOpen(true);
               }}
@@ -547,7 +754,26 @@ const CreateForm = (props) => {
             success: true,
           })}
           value={dataSource}
-          onChange={setDataSource}
+          onChange={(newDataSource) => {
+            // 验证所有行的预算造价之和不超过预算总造价
+            const budgetTotalCost =
+              formRef.current?.getFieldValue("budget_total_cost");
+            if (budgetTotalCost) {
+              const totalBudgetCost = newDataSource.reduce((sum, row) => {
+                return sum + (parseFloat(row.budget_cost) || 0);
+              }, 0);
+
+              if (totalBudgetCost > budgetTotalCost) {
+                message.error(
+                  `所有行的预算造价之和（${totalBudgetCost.toFixed(
+                    2
+                  )}元）不能超过预算总造价（${budgetTotalCost}元）`
+                );
+                return;
+              }
+            }
+            setDataSource(newDataSource);
+          }}
           recordCreatorProps={{
             position: "bottom",
             record: () => {
@@ -572,21 +798,35 @@ const CreateForm = (props) => {
         open={materialModalOpen}
         onCancel={() => setMaterialModalOpen(false)}
         phases={selectedPhases}
-        materialData={currentRowId ? materialData[currentRowId] : {}}
+        materialData={
+          currentRowId ? materialData[currentRowId] : globalMaterialData
+        }
         onSave={(data) => {
+          if (!validateBudgetLimit("material", data)) {
+            return false;
+          }
           if (currentRowId) {
             setMaterialData((prev) => ({ ...prev, [currentRowId]: data }));
+          } else {
+            setGlobalMaterialData(data);
           }
+          return true;
         }}
         type="material"
         supplierList={suppliers}
-        supplierData={currentRowId ? materialSupplierData[currentRowId] : {}}
+        supplierData={
+          currentRowId
+            ? materialSupplierData[currentRowId]
+            : globalMaterialSupplierData
+        }
         onSaveSupplier={(data) => {
           if (currentRowId) {
             setMaterialSupplierData((prev) => ({
               ...prev,
               [currentRowId]: data,
             }));
+          } else {
+            setGlobalMaterialSupplierData(data);
           }
         }}
       />
@@ -594,21 +834,35 @@ const CreateForm = (props) => {
         open={machineryModalOpen}
         onCancel={() => setMachineryModalOpen(false)}
         phases={selectedPhases}
-        materialData={currentRowId ? machineryData[currentRowId] : {}}
+        materialData={
+          currentRowId ? machineryData[currentRowId] : globalMachineryData
+        }
         onSave={(data) => {
+          if (!validateBudgetLimit("machinery", data)) {
+            return false;
+          }
           if (currentRowId) {
             setMachineryData((prev) => ({ ...prev, [currentRowId]: data }));
+          } else {
+            setGlobalMachineryData(data);
           }
+          return true;
         }}
         type="machinery"
         supplierList={suppliers}
-        supplierData={currentRowId ? machinerySupplierData[currentRowId] : {}}
+        supplierData={
+          currentRowId
+            ? machinerySupplierData[currentRowId]
+            : globalMachinerySupplierData
+        }
         onSaveSupplier={(data) => {
           if (currentRowId) {
             setMachinerySupplierData((prev) => ({
               ...prev,
               [currentRowId]: data,
             }));
+          } else {
+            setGlobalMachinerySupplierData(data);
           }
         }}
       />
@@ -616,18 +870,30 @@ const CreateForm = (props) => {
         open={laborModalOpen}
         onCancel={() => setLaborModalOpen(false)}
         phases={selectedPhases}
-        materialData={currentRowId ? laborData[currentRowId] : {}}
+        materialData={currentRowId ? laborData[currentRowId] : globalLaborData}
         onSave={(data) => {
+          if (!validateBudgetLimit("labor", data)) {
+            return false;
+          }
           if (currentRowId) {
             setLaborData((prev) => ({ ...prev, [currentRowId]: data }));
+          } else {
+            setGlobalLaborData(data);
           }
+          return true;
         }}
         type="labor"
         supplierList={suppliers}
-        supplierData={currentRowId ? laborSupplierData[currentRowId] : {}}
+        supplierData={
+          currentRowId
+            ? laborSupplierData[currentRowId]
+            : globalLaborSupplierData
+        }
         onSaveSupplier={(data) => {
           if (currentRowId) {
             setLaborSupplierData((prev) => ({ ...prev, [currentRowId]: data }));
+          } else {
+            setGlobalLaborSupplierData(data);
           }
         }}
       />
@@ -635,18 +901,28 @@ const CreateForm = (props) => {
         open={costModalOpen}
         onCancel={() => setCostModalOpen(false)}
         phases={selectedPhases}
-        materialData={currentRowId ? costData[currentRowId] : {}}
+        materialData={currentRowId ? costData[currentRowId] : globalCostData}
         onSave={(data) => {
+          if (!validateBudgetLimit("cost", data)) {
+            return false;
+          }
           if (currentRowId) {
             setCostData((prev) => ({ ...prev, [currentRowId]: data }));
+          } else {
+            setGlobalCostData(data);
           }
+          return true;
         }}
         type="cost"
         supplierList={suppliers}
-        supplierData={currentRowId ? costSupplierData[currentRowId] : {}}
+        supplierData={
+          currentRowId ? costSupplierData[currentRowId] : globalCostSupplierData
+        }
         onSaveSupplier={(data) => {
           if (currentRowId) {
             setCostSupplierData((prev) => ({ ...prev, [currentRowId]: data }));
+          } else {
+            setGlobalCostSupplierData(data);
           }
         }}
       />

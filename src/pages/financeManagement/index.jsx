@@ -254,6 +254,91 @@ const FinanceManagement = () => {
         }}
         columns={columns}
         scroll={{ x: 1500 }}
+        summary={(pageData) => {
+          let totalQuantity = 0;
+          let totalContractUnitPrice = 0;
+          let totalContractTotalPrice = 0;
+          let totalAmount = 0;
+          let totalWaitAccountPaid = 0;
+          let totalAccountPaid = 0;
+
+          pageData.forEach(
+            ({
+              quantity,
+              contract_unit_price,
+              contract_total_price,
+              total_amount,
+              wait_account_paid,
+              account_paid,
+            }) => {
+              totalQuantity += Number(quantity) || 0;
+              totalContractUnitPrice += Number(contract_unit_price) || 0;
+              totalContractTotalPrice += Number(contract_total_price) || 0;
+              totalAmount += Number(total_amount) || 0;
+              totalWaitAccountPaid += Number(wait_account_paid) || 0;
+              totalAccountPaid += Number(account_paid) || 0;
+            }
+          );
+
+          return (
+            <>
+              <ProTable.Summary.Row>
+                <ProTable.Summary.Cell index={0} colSpan={5}>
+                  <strong>合计</strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={5}>
+                  <strong>{totalQuantity.toLocaleString()}</strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={6}>
+                  <strong>
+                    ¥
+                    {totalContractUnitPrice.toLocaleString("zh-CN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={7}>
+                  <strong>
+                    ¥
+                    {totalContractTotalPrice.toLocaleString("zh-CN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={8}>
+                  <strong>
+                    ¥
+                    {totalAmount.toLocaleString("zh-CN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={9}>
+                  <strong>
+                    ¥
+                    {totalWaitAccountPaid.toLocaleString("zh-CN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={10}>
+                  <strong>
+                    ¥
+                    {totalAccountPaid.toLocaleString("zh-CN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={11} colSpan={2} />
+              </ProTable.Summary.Row>
+            </>
+          );
+        }}
       />
     </PageContainer>
   );

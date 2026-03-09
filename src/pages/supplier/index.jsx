@@ -1,6 +1,6 @@
 import { supplierDelete, supplierList } from "@/services/supplier";
 import { PageContainer, ProTable } from "@ant-design/pro-components";
-import { message, Popconfirm, Statistic } from "antd";
+import { message, Popconfirm } from "antd";
 import { useRef } from "react";
 import CreateForm from "./components/CreateForm.jsx";
 import UpdateForm from "./components/UpdateForm.jsx";
@@ -35,48 +35,6 @@ const Supplier = () => {
       hideInSearch: true,
     },
     {
-      title: "待付款金额",
-      dataIndex: "pending_payment",
-      hideInSearch: true,
-      render: (text) => {
-        return (
-          <Statistic
-            value={text}
-            precision={2}
-            valueStyle={{ fontSize: "16px", color: "orange" }}
-          />
-        );
-      },
-    },
-    {
-      title: "已付款金额",
-      dataIndex: "paid_amount",
-      hideInSearch: true,
-      render: (text) => {
-        return (
-          <Statistic
-            value={text}
-            precision={2}
-            valueStyle={{ fontSize: "16px", color: "green" }}
-          />
-        );
-      },
-    },
-    {
-      title: "欠款金额",
-      dataIndex: "arrears_amount",
-      hideInSearch: true,
-      render: (text) => {
-        return (
-          <Statistic
-            value={text}
-            precision={2}
-            valueStyle={{ fontSize: "16px", color: "red" }}
-          />
-        );
-      },
-    },
-    {
       title: "操作",
       dataIndex: "option",
       valueType: "option",
@@ -99,7 +57,6 @@ const Supplier = () => {
       ],
     },
   ];
-
   return (
     <PageContainer title={false}>
       {contextHolder}

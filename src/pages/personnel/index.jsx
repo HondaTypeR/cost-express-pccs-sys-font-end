@@ -1,5 +1,4 @@
 import { Departments, Roles } from "@/enum.js";
-import { removeRule } from "@/services/ant-design-pro/api";
 import { fetchCompany } from "@/services/company";
 import { fetchUser } from "@/services/user.js";
 import {
@@ -7,7 +6,6 @@ import {
   ProDescriptions,
   ProTable,
 } from "@ant-design/pro-components";
-import { useRequest } from "@umijs/max";
 import { Drawer, message } from "antd";
 import { useEffect, useRef, useState } from "react";
 import CreateForm from "./components/CreateForm.jsx";
@@ -34,19 +32,6 @@ const Personnel = () => {
   }, []);
 
   const [messageApi, contextHolder] = message.useMessage();
-
-  const { run: delRun, loading } = useRequest(removeRule, {
-    manual: true,
-    onSuccess: () => {
-      setSelectedRows([]);
-      actionRef.current?.reloadAndRest?.();
-
-      messageApi.success("Deleted successfully and will refresh soon");
-    },
-    onError: () => {
-      messageApi.error("Delete failed, please try again");
-    },
-  });
 
   const columns = [
     {
@@ -84,29 +69,6 @@ const Personnel = () => {
     },
   ];
 
-  /**
-   *  Delete node
-   * @zh-CN 删除节点
-   *
-   * @param selectedRows
-   */
-  // const handleRemove = useCallback(
-  //   async (selectedRows) => {
-  //     if (!selectedRows?.length) {
-  //       messageApi.warning("请选择删除项");
-
-  //       return;
-  //     }
-
-  //     await delRun({
-  //       data: {
-  //         key: selectedRows.map((row) => row.key),
-  //       },
-  //     });
-  //   },
-  //   [delRun, messageApi.warning]
-  // );
-
   return (
     <PageContainer title={false}>
       {contextHolder}
@@ -121,46 +83,16 @@ const Personnel = () => {
             companyList={companyList}
           />,
         ]}
-        request={fetchUser}
+        request={async () => {
+          const res = await fetchUser();
+          const filteredData = res.data.filter((item) => item.role !== "admin");
+          return {
+            data: filteredData,
+            success: true,
+          };
+        }}
         columns={columns}
-        // rowSelection={{
-        //   onChange: (_, selectedRows) => {
-        //     setSelectedRows(selectedRows);
-        //   },
-        // }}
       />
-      {/* {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              已选
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{" "}
-              <FormattedMessage
-                id="pages.searchTable.item"
-                defaultMessage="项"
-              />
-              &nbsp;&nbsp;
-              <span>
-                总计{" "}
-                {selectedRowsState.reduce(
-                  (pre, item) => pre + (item.callNo ?? 0),
-                  0
-                )}{" "}
-                万
-              </span>
-            </div>
-          }
-        >
-          <Button
-            loading={loading}
-            onClick={() => {
-              handleRemove(selectedRowsState);
-            }}
-          >
-            批量删除
-          </Button>
-        </FooterToolbar>
-      )} */}
       <Drawer
         width={600}
         open={showDetail}

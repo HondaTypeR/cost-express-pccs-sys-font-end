@@ -32,8 +32,6 @@ const CreateForm = (props) => {
         drawerProps={{
           onClose: () => setOpen(false),
           destroyOnClose: true,
-          maskClosable: false,
-          keyboard: false,
         }}
         onFinish={async (value) => {
           return new Promise((resolve) => {

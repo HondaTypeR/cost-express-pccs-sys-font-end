@@ -28,8 +28,6 @@ const ViewForm = (props) => {
         drawerProps={{
           onClose: () => setOpen(false),
           destroyOnClose: true,
-          maskClosable: false,
-          keyboard: false,
         }}
         initialValues={{
           ...values,
