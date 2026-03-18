@@ -1,7 +1,9 @@
 import { updateContract } from "@/services/contract";
 import {
   DrawerForm,
+  ProFormDependency,
   ProFormDigit,
+  ProFormRadio,
   ProFormSelect,
   ProFormText,
   ProFormTextArea,
@@ -63,6 +65,7 @@ const UpdateForm = (props) => {
             contract_id: values.contract_id,
             party_b: selectedSupplier?.label || "",
             project_name: value.project_name || values.project_name,
+            contract_type: values.contract_type,
             contract_attachment:
               value.contract_attachment?.[0]?.response?.data?.fileList?.[0]
                 ?.fileUrl ||
@@ -82,6 +85,15 @@ const UpdateForm = (props) => {
           }
         }}
       >
+        <ProFormRadio.Group
+          name="contract_type"
+          label="合同类型"
+          disabled
+          options={[
+            { label: "非采购合同", value: "1" },
+            { label: "采购合同", value: "2" },
+          ]}
+        />
         <ProFormText
           name="project_id"
           label="归属项目"
@@ -92,31 +104,76 @@ const UpdateForm = (props) => {
           }}
         />
         <ProFormText name="project_name" label="合同名称" />
-        <ProFormText
-          name="party_a"
-          label="甲方"
-          disabled
-          placeholder="请输入甲方名称"
-          rules={[
-            {
-              required: true,
-              message: "请输入甲方名称",
-            },
-          ]}
-        />
-        <ProFormSelect
-          name="party_b_id"
-          label="乙方"
-          disabled
-          placeholder="请选择乙方（供应商）"
-          options={suppliers}
-          rules={[
-            {
-              required: true,
-              message: "请选择乙方",
-            },
-          ]}
-        />
+        <ProFormDependency name={["contract_type"]}>
+          {({ contract_type }) => {
+            if (contract_type === "2") {
+              return (
+                <ProFormSelect
+                  name="party_a"
+                  label="甲方"
+                  disabled
+                  placeholder="请选择甲方（供应商）"
+                  options={suppliers}
+                  rules={[
+                    {
+                      required: true,
+                      message: "请选择甲方",
+                    },
+                  ]}
+                />
+              );
+            }
+            return (
+              <ProFormText
+                name="party_a"
+                label="甲方"
+                disabled
+                placeholder="请输入甲方名称"
+                rules={[
+                  {
+                    required: true,
+                    message: "请输入甲方名称",
+                  },
+                ]}
+              />
+            );
+          }}
+        </ProFormDependency>
+        <ProFormDependency name={["contract_type"]}>
+          {({ contract_type }) => {
+            if (contract_type === "2") {
+              return (
+                <ProFormText
+                  name="party_b"
+                  label="乙方"
+                  disabled
+                  placeholder="请输入乙方名称"
+                  rules={[
+                    {
+                      required: true,
+                      message: "请输入乙方名称",
+                    },
+                  ]}
+                />
+              );
+            }
+            return (
+              <ProFormSelect
+                name="party_b_id"
+                label="乙方"
+                disabled
+                placeholder="请选择乙方（供应商）"
+                options={suppliers}
+                rules={[
+                  {
+                    required: true,
+                    message: "请选择乙方",
+                  },
+                ]}
+              />
+            );
+          }}
+        </ProFormDependency>
         <ProFormDigit
           name="contract_amount"
           label="合同金额"
@@ -125,6 +182,7 @@ const UpdateForm = (props) => {
           fieldProps={{
             precision: 2,
             style: { width: "100%" },
+            min: Number.NEGATIVE_INFINITY,
           }}
           rules={[
             {
@@ -133,6 +191,31 @@ const UpdateForm = (props) => {
             },
           ]}
         />
+        <ProFormDependency name={["contract_amount"]}>
+          {({ contract_amount }) => {
+            if (
+              contract_amount === undefined ||
+              contract_amount === null ||
+              contract_amount === 0
+            ) {
+              return null;
+            }
+            return (
+              <ProFormText
+                name="amount_type_display"
+                label="核算类型"
+                readonly
+                disabled
+                fieldProps={{
+                  value:
+                    contract_amount >= 0
+                      ? `核增 ${contract_amount}`
+                      : `核减 ${Math.abs(contract_amount)}`,
+                }}
+              />
+            );
+          }}
+        </ProFormDependency>
         <ProFormSelect
           name="term"
           label="期限"
@@ -173,7 +256,6 @@ const UpdateForm = (props) => {
           disabled
           placeholder="请选择类型"
           options={[
-            { label: "人工", value: "labor" },
             { label: "材料", value: "material" },
             { label: "机械", value: "machinery" },
             { label: "包工包料", value: "package" },
@@ -186,18 +268,78 @@ const UpdateForm = (props) => {
             },
           ]}
         />
-        <ProFormText
-          name="material_name"
-          label="材料名称"
-          disabled
-          placeholder="请输入材料名称"
-        />
-        <ProFormText
-          name="machinery_name"
-          label="机械名称"
-          disabled
-          placeholder="请输入机械名称"
-        />
+        <ProFormDependency name={["type"]}>
+          {({ type }) => {
+            if (type === "material" || type === "package") {
+              return (
+                <ProFormTextArea
+                  name="material_name"
+                  label="材料名称"
+                  disabled
+                  placeholder="请输入材料名称"
+                  fieldProps={{
+                    rows: 4,
+                  }}
+                />
+              );
+            }
+            return null;
+          }}
+        </ProFormDependency>
+        <ProFormDependency name={["type"]}>
+          {({ type }) => {
+            if (type === "machinery" || type === "package") {
+              return (
+                <ProFormTextArea
+                  name="machinery_name"
+                  label="机械名称"
+                  disabled
+                  placeholder="请输入机械名称"
+                  fieldProps={{
+                    rows: 4,
+                  }}
+                />
+              );
+            }
+            return null;
+          }}
+        </ProFormDependency>
+        <ProFormDependency name={["type"]}>
+          {({ type }) => {
+            if (type === "package") {
+              return (
+                <ProFormTextArea
+                  name="people_name"
+                  label="人工名称"
+                  disabled
+                  placeholder="请输入人工名称"
+                  fieldProps={{
+                    rows: 4,
+                  }}
+                />
+              );
+            }
+            return null;
+          }}
+        </ProFormDependency>
+        <ProFormDependency name={["type"]}>
+          {({ type }) => {
+            if (type === "other") {
+              return (
+                <ProFormTextArea
+                  name="other_name"
+                  label="其他名称"
+                  disabled
+                  placeholder="请输入其他名称"
+                  fieldProps={{
+                    rows: 4,
+                  }}
+                />
+              );
+            }
+            return null;
+          }}
+        </ProFormDependency>
         <ProFormUploadButton
           name="contract_attachment"
           label="合同附件"

@@ -49,6 +49,15 @@ const Contract = () => {
             width: 100,
         },
         {
+            title: "合同类型",
+            dataIndex: "contract_type",
+            width: 100,
+            valueEnum: {
+                '1': { text: "非采购合同" },
+                '2': { text: "采购合同" },
+            },
+        },
+        {
             title: "归属项目",
             dataIndex: "project_id",
             width: 200,

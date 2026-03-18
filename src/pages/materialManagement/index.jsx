@@ -1,12 +1,15 @@
 import { AuditStatus, PhaseNum, WaitStatus } from "@/enum";
 import {
+  addReviewLog,
   approveMaterial,
   deleteMaterial,
   listContract,
   listMaterial,
   listProject,
+  listReviewLog,
   rejectMaterial,
   submitApproval,
+  updateReviewLog,
 } from "@/services/business";
 import { supplierList } from "@/services/supplier";
 import { fetchUser } from "@/services/user";
@@ -14,6 +17,7 @@ import { PageContainer, ProTable } from "@ant-design/pro-components";
 import { useModel } from "@umijs/max";
 import { Button, message, Popconfirm } from "antd";
 import { useEffect, useRef, useState } from "react";
+import ApprovalLogModal from "./Components/ApprovalLogModal";
 import ApprovalModal from "./Components/ApprovalModal";
 import CreateForm from "./Components/CreateForm";
 import FinalAuditModal from "./Components/FinalAuditModal";
@@ -240,6 +244,17 @@ const MaterialManagement = () => {
           />,
         ];
 
+        if (record.document_status > 0) {
+          actions.push(
+            <ApprovalLogModal
+              key="approval-log"
+              log_type="材料"
+              materialCode={record.material_code}
+              trigger={<a>审批日志</a>}
+            />
+          );
+        }
+
         // 只有状态为草稿时且当前登录用户是经办人时，显示编辑、删除和发起审批按钮
         if (record.document_status === 0 && currentUser?.id == record.handler) {
           actions.push(
@@ -262,6 +277,16 @@ const MaterialManagement = () => {
               users={users}
               currentStatus={record.document_status}
               onOk={async (reviewerId) => {
+                await addReviewLog({
+                  link_info: record.material_code,
+                  log_type: "材料",
+                  level_one_reviewer: currentUser?.username,
+                  level_one_review_status: "发起审批",
+                  level_two_reviewer: users.find(
+                    (user) => user.value === reviewerId
+                  )?.label,
+                  level_two_review_status: "待审批",
+                });
                 const res = await submitApproval({
                   material_code: record.material_code,
                   document_status: record.document_status + 1,
@@ -315,7 +340,21 @@ const MaterialManagement = () => {
               users={users}
               onOk={async (approvalStatus, approvalOpinion, user_id) => {
                 let res;
+                const getCurrentLog = await listReviewLog({
+                  link_info: record.material_code,
+                  log_type: "材料",
+                });
+
                 if (approvalStatus === 1) {
+                  await updateReviewLog({
+                    id: getCurrentLog.data?.[0]?.id,
+                    level_two_review_status: "审批通过",
+                    level_two_review_remark: approvalOpinion,
+                    level_three_reviewer: users.find(
+                      (user) => user.value === user_id
+                    )?.label,
+                    level_three_review_status: "待审批",
+                  });
                   // 审批通过
                   res = await approveMaterial({
                     material_code: record.material_code,
@@ -323,6 +362,11 @@ const MaterialManagement = () => {
                     user_id: user_id,
                   });
                 } else if (approvalStatus === 2) {
+                  await updateReviewLog({
+                    id: getCurrentLog.data?.[0]?.id,
+                    level_two_review_status: "审批驳回",
+                    level_two_review_remark: approvalOpinion,
+                  });
                   // 审批驳回
                   res = await rejectMaterial({
                     material_code: record.material_code,
@@ -353,6 +397,17 @@ const MaterialManagement = () => {
               onOk={async (approvalStatus, approvalOpinion) => {
                 let res;
                 if (approvalStatus === 1) {
+                  const getCurrentLog = await listReviewLog({
+                    link_info: record.material_code,
+                    log_type: "材料",
+                  });
+
+                  await updateReviewLog({
+                    id: getCurrentLog.data?.[0]?.id,
+                    level_three_reviewer: currentUser?.nickname,
+                    level_three_review_status: "审批通过",
+                    level_three_review_remark: approvalOpinion,
+                  });
                   // 审核通过
                   res = await approveMaterial({
                     material_code: record.material_code,
@@ -360,6 +415,16 @@ const MaterialManagement = () => {
                     user_id: currentUser?.id,
                   });
                 } else if (approvalStatus === 2) {
+                  const getCurrentLog = await listReviewLog({
+                    link_info: record.material_code,
+                    log_type: "材料",
+                  });
+                  await updateReviewLog({
+                    id: getCurrentLog.data?.[0]?.id,
+                    level_three_reviewer: currentUser?.nickname,
+                    level_three_review_status: "审批驳回",
+                    level_three_review_remark: approvalOpinion,
+                  });
                   // 审核驳回
                   res = await rejectMaterial({
                     material_code: record.material_code,

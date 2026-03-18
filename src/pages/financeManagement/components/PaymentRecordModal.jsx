@@ -1,16 +1,19 @@
 import { AuditStatus, DocumentStatus } from "@/enum";
 import {
+  addReviewLog,
   approveProcessRecord,
+  listReviewLog,
   rejectProcessRecord,
   submitProcessRecord,
+  updateReviewLog,
 } from "@/services/business";
 import { ProTable } from "@ant-design/pro-components";
 import { message, Modal } from "antd";
 import { cloneElement, useState } from "react";
-import ApprovalLogDrawer from "./ApprovalLogDrawer";
 import ApprovalModal from "./ApprovalModal";
 import FinalApprovalModal from "./FinalApprovalModal";
 import ReviewApprovalModal from "./ReviewApprovalModal";
+import ReviewLogModal from "./ReviewLogModal";
 
 const PaymentRecordModal = (props) => {
   const { trigger, records, users, currentUser, onRefresh } = props;
@@ -65,7 +68,8 @@ const PaymentRecordModal = (props) => {
     {
       title: "操作",
       valueType: "option",
-      width: 150,
+      fixed: "right",
+      width: 180,
       render: (text, record) => {
         const actions = [];
         // 只有状态为草稿(0)且审核状态为待审核(0)且当前用户是经办人时才显示发起审批按钮
@@ -84,6 +88,17 @@ const PaymentRecordModal = (props) => {
                 const processRecord = records.find(
                   (pr) => pr.relation_id === record.relation_id
                 );
+
+                await addReviewLog({
+                  link_info: record.id,
+                  log_type: "财务",
+                  level_one_reviewer: currentUser?.username,
+                  level_one_review_status: "发起审批",
+                  level_one_review_remark: "-",
+                  level_two_reviewer: users.find((u) => u.value === reviewerId)
+                    ?.label,
+                  level_two_review_status: "待审批",
+                });
 
                 const res = await submitProcessRecord({
                   material_code: record.relation_id,
@@ -124,7 +139,23 @@ const PaymentRecordModal = (props) => {
                 rejectReason
               ) => {
                 let res;
+                const getCurrentLog = await listReviewLog({
+                  link_info: record.id,
+                  log_type: "财务",
+                });
+                const logId = getCurrentLog.data?.[0]?.id;
                 if (approvalStatus === 1) {
+                  if (logId) {
+                    await updateReviewLog({
+                      id: logId,
+                      level_two_review_status: "审批通过",
+                      level_two_review_remark: approvalOpinion,
+                      level_three_reviewer: users.find(
+                        (u) => u.value === nextChecker
+                      )?.label,
+                      level_three_review_status: "待审批",
+                    });
+                  }
                   // 审批通过 - 经办部门审批
                   res = await approveProcessRecord({
                     id: record.id,
@@ -133,6 +164,13 @@ const PaymentRecordModal = (props) => {
                     current_document_status: 1,
                   });
                 } else if (approvalStatus === 2) {
+                  if (logId) {
+                    await updateReviewLog({
+                      id: logId,
+                      level_two_review_status: "审批驳回",
+                      level_two_review_remark: rejectReason,
+                    });
+                  }
                   // 审批拒绝
                   res = await rejectProcessRecord({
                     id: record.id,
@@ -173,7 +211,23 @@ const PaymentRecordModal = (props) => {
                 rejectReason
               ) => {
                 let res;
+                const getCurrentLog = await listReviewLog({
+                  link_info: record.id,
+                  log_type: "财务",
+                });
+                const logId = getCurrentLog.data?.[0]?.id;
                 if (approvalStatus === 1) {
+                  if (logId) {
+                    await updateReviewLog({
+                      id: logId,
+                      level_three_review_status: "审批通过",
+                      level_three_review_remark: approvalOpinion,
+                      level_four_reviewer: users.find(
+                        (u) => u.value === nextChecker
+                      )?.label,
+                      level_four_review_status: "待审批",
+                    });
+                  }
                   // 审批通过 - 财务部审批
                   res = await approveProcessRecord({
                     id: record.id,
@@ -182,6 +236,13 @@ const PaymentRecordModal = (props) => {
                     current_document_status: 2,
                   });
                 } else if (approvalStatus === 2) {
+                  if (logId) {
+                    await updateReviewLog({
+                      id: logId,
+                      level_three_review_status: "审批驳回",
+                      level_three_review_remark: rejectReason,
+                    });
+                  }
                   // 审批拒绝
                   res = await rejectProcessRecord({
                     id: record.id,
@@ -222,7 +283,23 @@ const PaymentRecordModal = (props) => {
                 rejectReason
               ) => {
                 let res;
+                const getCurrentLog = await listReviewLog({
+                  link_info: record.id,
+                  log_type: "财务",
+                });
+                const logId = getCurrentLog.data?.[0]?.id;
                 if (approvalStatus === 1) {
+                  if (logId) {
+                    await updateReviewLog({
+                      id: logId,
+                      level_four_review_status: "审批通过",
+                      level_four_review_remark: approvalOpinion,
+                      level_five_reviewer: users.find(
+                        (u) => u.value === nextChecker
+                      )?.label,
+                      level_five_review_status: "待审批",
+                    });
+                  }
                   // 审批通过 - 复核审批
                   res = await approveProcessRecord({
                     id: record.id,
@@ -231,6 +308,13 @@ const PaymentRecordModal = (props) => {
                     current_document_status: 3,
                   });
                 } else if (approvalStatus === 2) {
+                  if (logId) {
+                    await updateReviewLog({
+                      id: logId,
+                      level_four_review_status: "审批驳回",
+                      level_four_review_remark: rejectReason,
+                    });
+                  }
                   // 审批拒绝
                   res = await rejectProcessRecord({
                     id: record.id,
@@ -263,7 +347,20 @@ const PaymentRecordModal = (props) => {
               trigger={<a>审批</a>}
               onOk={async (approvalStatus, approvalReason, rejectReason) => {
                 let res;
+                const getCurrentLog = await listReviewLog({
+                  link_info: record.id,
+                  log_type: "财务",
+                });
+                const logId = getCurrentLog.data?.[0]?.id;
                 if (approvalStatus === 1) {
+                  if (logId) {
+                    await updateReviewLog({
+                      id: logId,
+                      level_five_reviewer: currentUser?.nickname,
+                      level_five_review_status: "审批通过",
+                      level_five_review_remark: approvalReason,
+                    });
+                  }
                   // 审批通过
                   res = await approveProcessRecord({
                     id: record.id,
@@ -271,6 +368,14 @@ const PaymentRecordModal = (props) => {
                     current_document_status: 4,
                   });
                 } else if (approvalStatus === 2) {
+                  if (logId) {
+                    await updateReviewLog({
+                      id: logId,
+                      level_five_reviewer: currentUser?.nickname,
+                      level_five_review_status: "审批驳回",
+                      level_five_review_remark: rejectReason,
+                    });
+                  }
                   // 审批拒绝
                   res = await rejectProcessRecord({
                     id: record.id,
@@ -294,13 +399,21 @@ const PaymentRecordModal = (props) => {
 
         // 审批日志按钮始终显示
         actions.push(
-          <ApprovalLogDrawer
-            key="approval-log"
+          <ReviewLogModal
+            key="review-log-modal"
             trigger={<a>审批日志</a>}
-            record={record}
-            users={users}
+            recordId={record.id}
           />
         );
+
+        // actions.push(
+        //   <ApprovalLogDrawer
+        //     key="approval-log"
+        //     trigger={<a>审批日志</a>}
+        //     record={record}
+        //     users={users}
+        //   />
+        // );
 
         return actions.length > 0 ? actions : "-";
       },

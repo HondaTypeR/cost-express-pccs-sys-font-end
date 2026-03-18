@@ -406,4 +406,38 @@ export async function submitProcessRecord(body, options) {
     });
 }
 
+// 新增 审批日志
+export async function addReviewLog(body, options) {
+    return request('/api/review/log/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        data: body,
+        ...(options || {}),
+    });
+}
+// 查询 审批日志
+export async function listReviewLog(body, options) {
+    return request('/api/review/log/list', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        data: body,
+        ...(options || {}),
+    });
+}
+// 更新 审批日志
+export async function updateReviewLog(body, options) {
+    return request('/api/review/log/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        data: body,
+        ...(options || {}),
+    });
+}
+
 
