@@ -1,9 +1,13 @@
-import { ModalForm, ProFormSelect } from "@ant-design/pro-components";
+import {
+  ModalForm,
+  ProFormDigit,
+  ProFormSelect,
+} from "@ant-design/pro-components";
 import { message } from "antd";
 import { cloneElement, useRef, useState } from "react";
 
 const ApprovalModal = (props) => {
-  const { trigger, users, onOk, currentStatus } = props;
+  const { trigger, users, onOk, currentStatus, currentAmount } = props;
   const formRef = useRef();
   const [open, setOpen] = useState(false);
 
@@ -19,6 +23,9 @@ const ApprovalModal = (props) => {
       modalProps={{
         onCancel: () => setOpen(false),
         destroyOnClose: true,
+      }}
+      initialValues={{
+        total_amount: currentAmount || 0,
       }}
       onFinish={async (values) => {
         if (!values.reviewer) {
@@ -49,6 +56,16 @@ const ApprovalModal = (props) => {
           showSearch: true,
           filterOption: (input, option) =>
             (option?.label ?? "").toLowerCase().includes(input.toLowerCase()),
+        }}
+      />
+      <ProFormDigit
+        name="total_amount"
+        label="总金额"
+        placeholder="请输入总金额"
+        disabled
+        fieldProps={{
+          precision: 2,
+          valueType: "money",
         }}
       />
       <div style={{ color: "#666", fontSize: 12, marginTop: -16 }}>

@@ -7,6 +7,7 @@ import { supplierList } from "@/services/supplier";
 import { fetchUser } from "@/services/user";
 import { PageContainer, ProTable } from "@ant-design/pro-components";
 import { useModel } from "@umijs/max";
+import { message } from "antd";
 import { useEffect, useRef, useState } from "react";
 import PaymentModal from "./components/PaymentModal";
 import PaymentRecordModal from "./components/PaymentRecordModal";
@@ -72,6 +73,24 @@ const FinanceManagement = () => {
 
   const columns = [
     {
+      title: "名称",
+      dataIndex: "material_name",
+      width: 150,
+      hideInSearch: true,
+      render: (_, record) => {
+        if (record?.material_name) {
+          return record?.material_name;
+        }
+        if (record?.machinery_name) {
+          return record?.machinery_name;
+        }
+        if (record?.artificial_name) {
+          return record?.artificial_name;
+        }
+        return "-";
+      },
+    },
+    {
       title: "供应商",
       dataIndex: "supplier",
       width: 200,
@@ -108,24 +127,6 @@ const FinanceManagement = () => {
         material: { text: "材料" },
         mechanical: { text: "机械" },
         artificial: { text: "人工" },
-      },
-    },
-    {
-      title: "名称",
-      dataIndex: "material_name",
-      width: 150,
-      hideInSearch: true,
-      render: (_, record) => {
-        if (record?.material_name) {
-          return record?.material_name;
-        }
-        if (record?.machinery_name) {
-          return record?.machinery_name;
-        }
-        if (record?.artificial_name) {
-          return record?.artificial_name;
-        }
-        return "-";
       },
     },
     {
@@ -179,8 +180,9 @@ const FinanceManagement = () => {
     {
       title: "已关联付款单",
       dataIndex: "payment_code",
-      width: 150,
+      width: 110,
       hideInSearch: true,
+      fixed: "right",
       render: (text, record) => {
         const relatedRecords = allProcessRecord.filter(
           (pr) => pr.relation_id === record.code
@@ -208,17 +210,19 @@ const FinanceManagement = () => {
       fixed: "right",
       render: (text, record) => {
         const actions = [];
-        actions.push(
-          <PaymentModal
-            key="payment"
-            record={record}
-            onOk={() => {
-              fetchProcessRecord();
-              actionRef.current?.reload();
-            }}
-            trigger={<a>创建付款单</a>}
-          />
-        );
+        if (record.wait_account_paid > 0) {
+          actions.push(
+            <PaymentModal
+              key="payment"
+              record={record}
+              onOk={() => {
+                fetchProcessRecord();
+                actionRef.current?.reload();
+              }}
+              trigger={<a>创建付款单</a>}
+            />
+          );
+        }
 
         return actions;
       },
@@ -245,12 +249,14 @@ const FinanceManagement = () => {
               success: true,
               total: res.data.summary?.totalCount || 0,
             };
+          } else {
+            message.error(res?.msg || "获取数据失败");
+            return {
+              data: [],
+              success: true,
+              total: 0,
+            };
           }
-          return {
-            data: [],
-            success: true,
-            total: 0,
-          };
         }}
         columns={columns}
         scroll={{ x: 1500 }}

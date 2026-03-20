@@ -3,6 +3,7 @@ import {
   addReviewLog,
   approveArtificial,
   deleteArtificial,
+  deleteReviewLog,
   listArtificial,
   listContract,
   listProject,
@@ -234,7 +235,7 @@ const MaterialManagement = () => {
     {
       title: "操作",
       valueType: "option",
-      width: 200,
+      width: 250,
       fixed: "right",
       render: (text, record) => {
         const actions = [
@@ -249,16 +250,14 @@ const MaterialManagement = () => {
           />,
         ];
 
-        if (record.document_status > 0) {
-          actions.push(
-            <ApprovalLogModal
-              key="approval-log"
-              log_type="人工"
-              materialCode={record.material_code}
-              trigger={<a>审批日志</a>}
-            />
-          );
-        }
+        actions.push(
+          <ApprovalLogModal
+            key="approval-log"
+            log_type="人工"
+            materialCode={record.artficial_code}
+            trigger={<a>审批日志</a>}
+          />
+        );
 
         // 只有状态为草稿时且当前登录用户是经办人时，显示编辑、删除和发起审批按钮
         if (record.document_status === 0 && currentUser?.id == record.handler) {
@@ -283,7 +282,7 @@ const MaterialManagement = () => {
               currentStatus={record.document_status}
               onOk={async (reviewerId) => {
                 await addReviewLog({
-                  link_info: record.material_code,
+                  link_info: record.artficial_code,
                   log_type: "人工",
                   level_one_reviewer: currentUser?.username,
                   level_one_review_status: "发起审批",
@@ -293,7 +292,7 @@ const MaterialManagement = () => {
                   level_two_review_status: "待审批",
                 });
                 const res = await submitArtificialApproval({
-                  material_code: record.material_code,
+                  artficial_code: record.artficial_code,
                   document_status: record.document_status + 1,
                   user_id: reviewerId,
                 });
@@ -315,8 +314,14 @@ const MaterialManagement = () => {
               title="确认删除"
               description="确定要删除这条人工记录吗？删除后无法恢复。"
               onConfirm={async () => {
+                try {
+                  await deleteReviewLog({
+                    link_info: record.artficial_code,
+                    log_type: "人工",
+                  });
+                } catch (e) {}
                 const res = await deleteArtificial({
-                  material_code: record.material_code,
+                  artficial_code: record.artficial_code,
                 });
                 if (res.code === 200) {
                   message.success(res?.msg || "删除成功");
@@ -346,7 +351,7 @@ const MaterialManagement = () => {
               onOk={async (approvalStatus, approvalOpinion, user_id) => {
                 let res;
                 const getCurrentLog = await listReviewLog({
-                  link_info: record.material_code,
+                  link_info: record.artficial_code,
                   log_type: "人工",
                 });
                 const logId = getCurrentLog.data?.[0]?.id;
@@ -364,8 +369,8 @@ const MaterialManagement = () => {
                   }
                   // 审批通过
                   res = await approveArtificial({
-                    material_code: record.material_code,
-                    mark: approvalOpinion,
+                    artficial_code: record.artficial_code,
+                    approval_note: approvalOpinion,
                     user_id: user_id,
                   });
                 } else if (approvalStatus === 2) {
@@ -378,8 +383,8 @@ const MaterialManagement = () => {
                   }
                   // 审批驳回
                   res = await rejectArtificial({
-                    material_code: record.material_code,
-                    mark: approvalOpinion,
+                    artficial_code: record.artficial_code,
+                    reject_note: approvalOpinion,
                     user_id: currentUser.id,
                   });
                 }
@@ -407,7 +412,7 @@ const MaterialManagement = () => {
                 let res;
                 if (approvalStatus === 1) {
                   const getCurrentLog = await listReviewLog({
-                    link_info: record.material_code,
+                    link_info: record.artficial_code,
                     log_type: "人工",
                   });
                   const logId = getCurrentLog.data?.[0]?.id;
@@ -421,13 +426,13 @@ const MaterialManagement = () => {
                   }
                   // 审核通过
                   res = await approveArtificial({
-                    material_code: record.material_code,
+                    artficial_code: record.artficial_code,
                     approval_note: approvalOpinion,
                     user_id: currentUser?.id,
                   });
                 } else if (approvalStatus === 2) {
                   const getCurrentLog = await listReviewLog({
-                    link_info: record.material_code,
+                    link_info: record.artficial_code,
                     log_type: "人工",
                   });
                   const logId = getCurrentLog.data?.[0]?.id;
@@ -441,7 +446,7 @@ const MaterialManagement = () => {
                   }
                   // 审核驳回
                   res = await rejectArtificial({
-                    material_code: record.material_code,
+                    artficial_code: record.artficial_code,
                     reject_note: approvalOpinion,
                     user_id: currentUser?.id,
                   });
@@ -470,7 +475,7 @@ const MaterialManagement = () => {
       <ProTable
         headerTitle="人工管理列表"
         actionRef={actionRef}
-        rowKey="material_code"
+        rowKey="artficial_code"
         search={{
           labelWidth: 120,
         }}

@@ -49,12 +49,21 @@ const ReviewLogModal = (props) => {
     return "blue";
   };
 
-  const renderNode = (title, reviewer, status, remark, time) => {
+  const renderNode = (
+    title,
+    approval_money,
+    reviewer,
+    status,
+    remark,
+    time
+  ) => {
     const showTime =
       !!time &&
       !!status &&
       !String(status).includes("待") &&
       !String(status).includes("待审");
+
+    const showApprovalMoney = !!approval_money && !!status;
 
     return (
       <div>
@@ -64,6 +73,15 @@ const ReviewLogModal = (props) => {
         {status ? (
           <div style={{ color: "#666", fontSize: 12, marginBottom: 4 }}>
             审批状态：{status}
+          </div>
+        ) : null}
+        {showApprovalMoney ? (
+          <div style={{ color: "#666", fontSize: 12, marginBottom: 4 }}>
+            {title === "经办人"
+              ? `发起金额: ${approval_money} 元`
+              : title === "终审人"
+              ? `实际审批金额: ${approval_money} 元`
+              : `审批金额: ${approval_money} 元`}
           </div>
         ) : null}
         {remark ? (
@@ -88,6 +106,7 @@ const ReviewLogModal = (props) => {
       color: getStatusColor(currentLog?.level_one_review_status),
       children: renderNode(
         "经办人",
+        currentLog?.approval_money,
         currentLog?.level_one_reviewer,
         currentLog?.level_one_review_status,
         currentLog?.level_one_review_remark,
@@ -99,6 +118,7 @@ const ReviewLogModal = (props) => {
       color: getStatusColor(currentLog?.level_two_review_status),
       children: renderNode(
         "经办部门负责人",
+        currentLog?.approval_money,
         currentLog?.level_two_reviewer,
         currentLog?.level_two_review_status,
         currentLog?.level_two_review_remark,
@@ -110,6 +130,7 @@ const ReviewLogModal = (props) => {
       color: getStatusColor(currentLog?.level_three_review_status),
       children: renderNode(
         "财务部负责人",
+        currentLog?.approval_money,
         currentLog?.level_three_reviewer,
         currentLog?.level_three_review_status,
         currentLog?.level_three_review_remark,
@@ -121,6 +142,7 @@ const ReviewLogModal = (props) => {
       color: getStatusColor(currentLog?.level_four_review_status),
       children: renderNode(
         "复核人",
+        currentLog?.approval_money,
         currentLog?.level_four_reviewer,
         currentLog?.level_four_review_status,
         currentLog?.level_four_review_remark,
@@ -132,6 +154,7 @@ const ReviewLogModal = (props) => {
       color: getStatusColor(currentLog?.level_five_review_status),
       children: renderNode(
         "终审人",
+        currentLog?.real_approval_money,
         currentLog?.level_five_reviewer,
         currentLog?.level_five_review_status,
         currentLog?.level_five_review_remark,

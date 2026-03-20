@@ -84,6 +84,7 @@ const PaymentRecordModal = (props) => {
               trigger={<a>发起审批</a>}
               users={users}
               currentStatus={record.document_status}
+              currentAmount={record.total_amount}
               onOk={async (reviewerId) => {
                 const processRecord = records.find(
                   (pr) => pr.relation_id === record.relation_id
@@ -98,6 +99,7 @@ const PaymentRecordModal = (props) => {
                   level_two_reviewer: users.find((u) => u.value === reviewerId)
                     ?.label,
                   level_two_review_status: "待审批",
+                  approval_money: record.total_amount,
                 });
 
                 const res = await submitProcessRecord({
@@ -131,6 +133,7 @@ const PaymentRecordModal = (props) => {
               key="handler-dept-approval"
               trigger={<a>审批</a>}
               users={users}
+              currentAmount={record.total_amount}
               nextApproverLabel="财务部审批人"
               onOk={async (
                 approvalStatus,
@@ -203,6 +206,7 @@ const PaymentRecordModal = (props) => {
               key="finance-approval"
               trigger={<a>审批</a>}
               users={users}
+              currentAmount={record.total_amount}
               nextApproverLabel="复核审批人"
               onOk={async (
                 approvalStatus,
@@ -275,6 +279,7 @@ const PaymentRecordModal = (props) => {
               key="rechecker-approval"
               trigger={<a>审批</a>}
               users={users}
+              currentAmount={record.total_amount}
               nextApproverLabel="终审审批人"
               onOk={async (
                 approvalStatus,
@@ -345,7 +350,13 @@ const PaymentRecordModal = (props) => {
             <FinalApprovalModal
               key="final-approval"
               trigger={<a>审批</a>}
-              onOk={async (approvalStatus, approvalReason, rejectReason) => {
+              currentAmount={record.total_amount}
+              onOk={async (
+                approvalStatus,
+                approvalReason,
+                rejectReason,
+                real_amount
+              ) => {
                 let res;
                 const getCurrentLog = await listReviewLog({
                   link_info: record.id,
@@ -359,6 +370,7 @@ const PaymentRecordModal = (props) => {
                       level_five_reviewer: currentUser?.nickname,
                       level_five_review_status: "审批通过",
                       level_five_review_remark: approvalReason,
+                      real_approval_money: String(real_amount),
                     });
                   }
                   // 审批通过
@@ -366,6 +378,8 @@ const PaymentRecordModal = (props) => {
                     id: record.id,
                     remark: approvalReason || "-",
                     current_document_status: 4,
+                    // 最终实际审批金额
+                    real_amount,
                   });
                 } else if (approvalStatus === 2) {
                   if (logId) {
@@ -405,15 +419,6 @@ const PaymentRecordModal = (props) => {
             recordId={record.id}
           />
         );
-
-        // actions.push(
-        //   <ApprovalLogDrawer
-        //     key="approval-log"
-        //     trigger={<a>审批日志</a>}
-        //     record={record}
-        //     users={users}
-        //   />
-        // );
 
         return actions.length > 0 ? actions : "-";
       },

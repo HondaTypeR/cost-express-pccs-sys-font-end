@@ -84,7 +84,7 @@ const UpdateForm = (props) => {
 
           const params = {
             ...value,
-            material_code: values.material_code,
+            artficial_code: values.artficial_code,
             project_name: selectedProject?.label || "",
             related_contract: value.related_contract,
             acceptance_note:

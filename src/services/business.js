@@ -439,5 +439,16 @@ export async function updateReviewLog(body, options) {
         ...(options || {}),
     });
 }
+// 删除 审批日志
+export async function deleteReviewLog(body, options) {
+    return request('/api/review/log/delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        data: body,
+        ...(options || {}),
+    });
+}
 
 

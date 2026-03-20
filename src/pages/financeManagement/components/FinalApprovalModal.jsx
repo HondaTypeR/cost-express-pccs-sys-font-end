@@ -1,9 +1,14 @@
-import { ModalForm, ProFormRadio, ProFormTextArea } from "@ant-design/pro-components";
+import {
+  ModalForm,
+  ProFormDigit,
+  ProFormRadio,
+  ProFormTextArea,
+} from "@ant-design/pro-components";
 import { message } from "antd";
 import { cloneElement, useRef, useState } from "react";
 
 const FinalApprovalModal = (props) => {
-  const { trigger, onOk } = props;
+  const { trigger, onOk, currentAmount } = props;
   const formRef = useRef();
   const [open, setOpen] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState(1); // 1: 通过, 2: 拒绝
@@ -24,13 +29,21 @@ const FinalApprovalModal = (props) => {
         },
         destroyOnClose: true,
       }}
+      initialValues={{
+        total_amount: currentAmount || 0,
+      }}
       onFinish={async (values) => {
         if (approvalStatus === 2 && !values.reject_reason) {
           message.error("请填写拒绝原因");
           return false;
         }
 
-        const success = await onOk?.(approvalStatus, values.approval_reason, values.reject_reason);
+        const success = await onOk?.(
+          approvalStatus,
+          values.approval_reason,
+          values.reject_reason,
+          values.total_amount
+        );
         if (success) {
           setOpen(false);
           setApprovalStatus(1);
@@ -61,14 +74,30 @@ const FinalApprovalModal = (props) => {
       />
 
       {approvalStatus === 1 && (
-        <ProFormTextArea
-          name="approval_reason"
-          label="通过理由"
-          placeholder="请输入通过理由（选填）"
-          fieldProps={{
-            rows: 4,
-          }}
-        />
+        <>
+          <ProFormDigit
+            name="total_amount"
+            label="最终审批金额"
+            placeholder="请输入最终审批金额"
+            fieldProps={{
+              precision: 2,
+            }}
+            rules={[
+              {
+                required: true,
+                message: "请输入最终审批金额",
+              },
+            ]}
+          />
+          <ProFormTextArea
+            name="approval_reason"
+            label="通过理由"
+            placeholder="请输入通过理由（选填）"
+            fieldProps={{
+              rows: 4,
+            }}
+          />
+        </>
       )}
 
       {approvalStatus === 2 && (

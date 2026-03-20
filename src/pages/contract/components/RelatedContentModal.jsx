@@ -212,7 +212,7 @@ const RelatedContentModal = (props) => {
         <ProTable
           columns={mechanicalColumns}
           dataSource={relatedData.mechanicals}
-          rowKey="material_code"
+          rowKey="mechanical_code"
           search={false}
           pagination={{
             pageSize: 10,
@@ -231,7 +231,7 @@ const RelatedContentModal = (props) => {
         <ProTable
           columns={artificialColumns}
           dataSource={relatedData.artificials}
-          rowKey="material_code"
+          rowKey="artficial_code"
           search={false}
           pagination={{
             pageSize: 10,

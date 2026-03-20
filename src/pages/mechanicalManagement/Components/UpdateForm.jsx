@@ -65,7 +65,9 @@ const UpdateForm = (props) => {
         }}
         initialValues={{
           ...values,
-          related_contract: Number(values.related_contract),
+          related_contract: values.related_contract
+            ? Number(values.related_contract)
+            : undefined,
           acceptance_note: values.acceptance_note
             ? [
                 {
@@ -84,7 +86,7 @@ const UpdateForm = (props) => {
 
           const params = {
             ...value,
-            material_code: values.material_code,
+            mechanical_code: values.mechanical_code,
             project_name: selectedProject?.label || "",
             related_contract: value.related_contract,
             acceptance_note:

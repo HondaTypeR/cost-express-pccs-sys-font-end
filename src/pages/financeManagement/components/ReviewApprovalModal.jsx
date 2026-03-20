@@ -1,5 +1,6 @@
 import {
   ModalForm,
+  ProFormDigit,
   ProFormRadio,
   ProFormSelect,
   ProFormTextArea,
@@ -8,14 +9,20 @@ import { message } from "antd";
 import { cloneElement, useRef, useState } from "react";
 
 const ReviewApprovalModal = (props) => {
-  const { trigger, users, onOk, nextApproverLabel = "下一级审批人" } = props;
+  const {
+    trigger,
+    users,
+    onOk,
+    nextApproverLabel = "下一级审批人",
+    currentAmount,
+  } = props;
   const formRef = useRef();
   const [open, setOpen] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState(1); // 1: 通过, 2: 拒绝
 
   return (
     <ModalForm
-      title="审批"
+      title={`审批详情`}
       formRef={formRef}
       open={open}
       trigger={cloneElement(trigger, {
@@ -28,6 +35,9 @@ const ReviewApprovalModal = (props) => {
           setApprovalStatus(1);
         },
         destroyOnClose: true,
+      }}
+      initialValues={{
+        total_amount: currentAmount || 0,
       }}
       onFinish={async (values) => {
         if (approvalStatus === 1 && !values.next_checker) {
@@ -53,6 +63,15 @@ const ReviewApprovalModal = (props) => {
         return false;
       }}
     >
+      <ProFormDigit
+        name="total_amount"
+        label="审批金额"
+        placeholder="请输入审批金额"
+        disabled
+        fieldProps={{
+          precision: 2,
+        }}
+      />
       <ProFormRadio.Group
         name="approval_status"
         label="审批意见"

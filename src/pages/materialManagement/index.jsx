@@ -3,6 +3,7 @@ import {
   addReviewLog,
   approveMaterial,
   deleteMaterial,
+  deleteReviewLog,
   listContract,
   listMaterial,
   listProject,
@@ -229,7 +230,7 @@ const MaterialManagement = () => {
     {
       title: "操作",
       valueType: "option",
-      width: 200,
+      width: 250,
       fixed: "right",
       render: (text, record) => {
         const actions = [
@@ -244,16 +245,14 @@ const MaterialManagement = () => {
           />,
         ];
 
-        if (record.document_status > 0) {
-          actions.push(
-            <ApprovalLogModal
-              key="approval-log"
-              log_type="材料"
-              materialCode={record.material_code}
-              trigger={<a>审批日志</a>}
-            />
-          );
-        }
+        actions.push(
+          <ApprovalLogModal
+            key="approval-log"
+            log_type="材料"
+            materialCode={record.material_code}
+            trigger={<a>审批日志</a>}
+          />
+        );
 
         // 只有状态为草稿时且当前登录用户是经办人时，显示编辑、删除和发起审批按钮
         if (record.document_status === 0 && currentUser?.id == record.handler) {
@@ -310,6 +309,10 @@ const MaterialManagement = () => {
               title="确认删除"
               description="确定要删除这条材料记录吗？删除后无法恢复。"
               onConfirm={async () => {
+                await deleteReviewLog({
+                  link_info: record.material_code,
+                  log_type: "材料",
+                });
                 const res = await deleteMaterial({
                   material_code: record.material_code,
                 });
@@ -323,7 +326,9 @@ const MaterialManagement = () => {
               okText="确认"
               cancelText="取消"
             >
-              <a key="delete">删除</a>
+              <a key="delete" style={{ color: "red" }}>
+                删除
+              </a>
             </Popconfirm>
           );
         }
@@ -358,7 +363,7 @@ const MaterialManagement = () => {
                   // 审批通过
                   res = await approveMaterial({
                     material_code: record.material_code,
-                    mark: approvalOpinion,
+                    approval_note: approvalOpinion,
                     user_id: user_id,
                   });
                 } else if (approvalStatus === 2) {
@@ -370,7 +375,7 @@ const MaterialManagement = () => {
                   // 审批驳回
                   res = await rejectMaterial({
                     material_code: record.material_code,
-                    mark: approvalOpinion,
+                    reject_note: approvalOpinion,
                     user_id: currentUser.id,
                   });
                 }

@@ -20,6 +20,12 @@ const PaymentModal = (props) => {
   const [paymentItems, setPaymentItems] = useState([]);
   const [editableKeys, setEditableRowKeys] = useState([]);
 
+  const resetFormState = () => {
+    formRef.current?.resetFields?.();
+    setPaymentItems([]);
+    setEditableRowKeys([]);
+  };
+
   useEffect(() => {
     const fetchSuppliers = async () => {
       const res = await supplierList();
@@ -45,13 +51,19 @@ const PaymentModal = (props) => {
       trigger={
         trigger
           ? cloneElement(trigger, {
-              onClick: () => setOpen(true),
+              onClick: () => {
+                resetFormState();
+                setOpen(true);
+              },
             })
           : null
       }
       width={1000}
       drawerProps={{
-        onClose: () => setOpen(false),
+        onClose: () => {
+          setOpen(false);
+          resetFormState();
+        },
         destroyOnClose: true,
       }}
       onFinish={async (values) => {
@@ -80,6 +92,7 @@ const PaymentModal = (props) => {
           }
 
           message.success("创建付款单成功");
+          resetFormState();
           setOpen(false);
           onOk?.();
           return true;
@@ -186,6 +199,7 @@ const PaymentModal = (props) => {
             width: 150,
             fieldProps: {
               precision: 2,
+              min: 1,
               style: { width: "100%" },
             },
             formItemProps: {
