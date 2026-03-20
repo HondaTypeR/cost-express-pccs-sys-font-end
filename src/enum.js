@@ -59,6 +59,13 @@ export const DocumentStatus = [
     { label: "已归档", value: 10 },
 ]
 
+export const DocumentStatusContract = [
+    { label: "草稿", value: 0 },
+    { label: "已提交", value: 1 },
+    { label: "已验收", value: 2 },
+    { label: "已归档", value: 3 },
+]
+
 export const WaitStatus = [
     { label: "草稿", value: 0 },
     { label: "经办部门审批", value: 1 },

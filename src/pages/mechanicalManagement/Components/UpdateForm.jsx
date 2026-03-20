@@ -7,7 +7,7 @@ import {
   ProFormText,
   ProFormUploadButton,
 } from "@ant-design/pro-components";
-import { message } from "antd";
+import { Image, Upload, message } from "antd";
 import { cloneElement, useEffect, useRef, useState } from "react";
 
 const UpdateForm = (props) => {
@@ -18,6 +18,7 @@ const UpdateForm = (props) => {
   const [quantity, setQuantity] = useState(values.quantity || 0);
   const [unitPrice, setUnitPrice] = useState(values.unit_price || 0);
   const [totalPrice, setTotalPrice] = useState(values.total_price || 0);
+  const [imgPreview, setImgPreview] = useState({ visible: false, src: "" });
 
   useEffect(() => {
     if (open) {
@@ -47,6 +48,33 @@ const UpdateForm = (props) => {
     calculateTotalPrice(quantity, value || 0);
   };
 
+  const parseAcceptanceNote = (raw) => {
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .map((x) => ({
+          fileUrl: String(x?.fileUrl || ""),
+          fileName: String(x?.fileName || ""),
+        }))
+        .filter((x) => x.fileUrl);
+    } catch {
+      return [];
+    }
+  };
+
+  const getFileMeta = (file) => {
+    const fileUrl =
+      file?.response?.data?.fileList?.[0]?.fileUrl ||
+      file?.url ||
+      file?.thumbUrl ||
+      "";
+    const fileName = String(file?.name || "");
+    if (!fileUrl) return null;
+    return { fileUrl, fileName };
+  };
+
   return (
     <>
       <DrawerForm
@@ -68,32 +96,40 @@ const UpdateForm = (props) => {
           related_contract: values.related_contract
             ? Number(values.related_contract)
             : undefined,
-          acceptance_note: values.acceptance_note
-            ? [
-                {
-                  uid: "-1",
-                  name: values.acceptance_note.split("/").pop() || "验收说明",
-                  status: "done",
-                  url: values.acceptance_note,
-                },
-              ]
-            : [],
+          acceptance_note: (() => {
+            const files = parseAcceptanceNote(values.acceptance_note);
+            return files.map((f, idx) => ({
+              uid: `-acceptance-${idx}`,
+              name:
+                f.fileName ||
+                String(f.fileUrl).split("/").pop() ||
+                `验收说明${idx + 1}`,
+              status: "done",
+              url: f.fileUrl,
+            }));
+          })(),
         }}
         onFinish={async (value) => {
           const selectedProject = projects.find(
             (p) => p.value === value.project_id
           );
 
+          const acceptanceNoteList = Array.isArray(value.acceptance_note)
+            ? value.acceptance_note
+            : [];
+          const acceptanceNoteFiles = acceptanceNoteList
+            .map(getFileMeta)
+            .filter(Boolean);
+          const acceptanceNotePayload = acceptanceNoteFiles.length
+            ? JSON.stringify(acceptanceNoteFiles)
+            : "";
+
           const params = {
             ...value,
             mechanical_code: values.mechanical_code,
             project_name: selectedProject?.label || "",
             related_contract: value.related_contract,
-            acceptance_note:
-              value.acceptance_note?.[0]?.response?.data?.fileList?.[0]
-                ?.fileUrl ||
-              value.acceptance_note?.[0]?.url ||
-              "",
+            acceptance_note: acceptanceNotePayload,
           };
           const res = await updateMechanical(params);
 
@@ -251,14 +287,27 @@ const UpdateForm = (props) => {
         <ProFormUploadButton
           name="acceptance_note"
           label="验收说明"
-          max={1}
+          max={5}
           fieldProps={{
             name: "files",
+            accept: "image/*,.pdf",
             listType: "text",
             showUploadList: {
               showDownloadIcon: true,
               showRemoveIcon: true,
               showPreviewIcon: true,
+            },
+            beforeUpload: (file) => {
+              const fileType = String(file?.type || "");
+              const fileName = String(file?.name || "").toLowerCase();
+              const isImage = fileType.startsWith("image/");
+              const isPdf =
+                fileType === "application/pdf" || fileName.endsWith(".pdf");
+              if (!isImage && !isPdf) {
+                message.error("仅支持上传图片或PDF文件");
+                return Upload.LIST_IGNORE;
+              }
+              return true;
             },
             onChange: (info) => {
               if (info.file.status === "done") {
@@ -270,13 +319,37 @@ const UpdateForm = (props) => {
               }
             },
             onPreview: (file) => {
-              window.open(
-                file.url || file.response?.data?.fileList?.[0]?.fileUrl,
-                "_blank"
-              );
+              const url =
+                file.url || file.response?.data?.fileList?.[0]?.fileUrl;
+              const name = String(file?.name || "").toLowerCase();
+              const type = String(file?.type || "");
+              const isPdf = type === "application/pdf" || name.endsWith(".pdf");
+              const isImage =
+                type.startsWith("image/") ||
+                /\.(png|jpe?g|gif|bmp|webp|svg)$/i.test(name);
+              if (!url) return;
+              if (isPdf) {
+                window.open(url, "_blank");
+                return;
+              }
+              if (isImage) {
+                setImgPreview({ visible: true, src: url });
+                return;
+              }
+              window.open(url, "_blank");
             },
           }}
           action="/api/contract/upload"
+        />
+        <Image
+          src={imgPreview.src}
+          style={{ display: "none" }}
+          preview={{
+            visible: imgPreview.visible,
+            src: imgPreview.src,
+            onVisibleChange: (v) =>
+              setImgPreview((prev) => ({ ...prev, visible: v })),
+          }}
         />
       </DrawerForm>
     </>

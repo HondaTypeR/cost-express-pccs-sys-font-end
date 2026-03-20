@@ -104,6 +104,48 @@ const FinanceManagement = () => {
       },
     },
     {
+      title: "数量",
+      dataIndex: "quantity",
+      width: 100,
+      valueType: "digit",
+      hideInSearch: true,
+    },
+    {
+      title: "合同单价",
+      dataIndex: "contract_unit_price",
+      width: 120,
+      valueType: "money",
+      hideInSearch: true,
+    },
+    {
+      title: "合同总价",
+      dataIndex: "contract_total_price",
+      width: 120,
+      valueType: "money",
+      hideInSearch: true,
+    },
+    // {
+    //   title: "总金额",
+    //   dataIndex: "total_amount",
+    //   width: 120,
+    //   valueType: "money",
+    //   hideInSearch: true,
+    // },
+    {
+      title: "待付款金额",
+      dataIndex: "wait_account_paid",
+      width: 150,
+      valueType: "money",
+      hideInSearch: true,
+    },
+    {
+      title: "已付款金额",
+      dataIndex: "account_paid",
+      width: 150,
+      valueType: "money",
+      hideInSearch: true,
+    },
+    {
       title: "归属项目",
       dataIndex: "project_name",
       width: 150,
@@ -133,48 +175,6 @@ const FinanceManagement = () => {
       title: "单位",
       dataIndex: "unit",
       width: 100,
-      hideInSearch: true,
-    },
-    {
-      title: "数量",
-      dataIndex: "quantity",
-      width: 100,
-      valueType: "digit",
-      hideInSearch: true,
-    },
-    {
-      title: "合同单价",
-      dataIndex: "contract_unit_price",
-      width: 120,
-      valueType: "money",
-      hideInSearch: true,
-    },
-    {
-      title: "合同总价",
-      dataIndex: "contract_total_price",
-      width: 120,
-      valueType: "money",
-      hideInSearch: true,
-    },
-    {
-      title: "总金额",
-      dataIndex: "total_amount",
-      width: 120,
-      valueType: "money",
-      hideInSearch: true,
-    },
-    {
-      title: "待付款金额",
-      dataIndex: "wait_account_paid",
-      width: 150,
-      valueType: "money",
-      hideInSearch: true,
-    },
-    {
-      title: "已付款金额",
-      dataIndex: "account_paid",
-      width: 150,
-      valueType: "money",
       hideInSearch: true,
     },
     {
@@ -264,7 +264,6 @@ const FinanceManagement = () => {
           let totalQuantity = 0;
           let totalContractUnitPrice = 0;
           let totalContractTotalPrice = 0;
-          let totalAmount = 0;
           let totalWaitAccountPaid = 0;
           let totalAccountPaid = 0;
 
@@ -273,14 +272,12 @@ const FinanceManagement = () => {
               quantity,
               contract_unit_price,
               contract_total_price,
-              total_amount,
               wait_account_paid,
               account_paid,
             }) => {
               totalQuantity += Number(quantity) || 0;
               totalContractUnitPrice += Number(contract_unit_price) || 0;
               totalContractTotalPrice += Number(contract_total_price) || 0;
-              totalAmount += Number(total_amount) || 0;
               totalWaitAccountPaid += Number(wait_account_paid) || 0;
               totalAccountPaid += Number(account_paid) || 0;
             }
@@ -289,14 +286,14 @@ const FinanceManagement = () => {
           return (
             <>
               <ProTable.Summary.Row>
-                <ProTable.Summary.Cell index={0} colSpan={5}>
+                <ProTable.Summary.Cell index={0} colSpan={2}>
                   <strong>合计</strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={5}>
+                <ProTable.Summary.Cell index={2}>
                   <strong>{totalQuantity.toLocaleString()}</strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={6}>
-                  <strong>
+                <ProTable.Summary.Cell index={3}>
+                  <strong style={{ color: "orange" }}>
                     ¥
                     {totalContractUnitPrice.toLocaleString("zh-CN", {
                       minimumFractionDigits: 2,
@@ -304,8 +301,8 @@ const FinanceManagement = () => {
                     })}
                   </strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={7}>
-                  <strong>
+                <ProTable.Summary.Cell index={4}>
+                  <strong style={{ color: "blue" }}>
                     ¥
                     {totalContractTotalPrice.toLocaleString("zh-CN", {
                       minimumFractionDigits: 2,
@@ -313,17 +310,8 @@ const FinanceManagement = () => {
                     })}
                   </strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={8}>
-                  <strong>
-                    ¥
-                    {totalAmount.toLocaleString("zh-CN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </strong>
-                </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={9}>
-                  <strong>
+                <ProTable.Summary.Cell index={5}>
+                  <strong style={{ color: "red" }}>
                     ¥
                     {totalWaitAccountPaid.toLocaleString("zh-CN", {
                       minimumFractionDigits: 2,
@@ -331,8 +319,8 @@ const FinanceManagement = () => {
                     })}
                   </strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={10}>
-                  <strong>
+                <ProTable.Summary.Cell index={6}>
+                  <strong style={{ color: "green" }}>
                     ¥
                     {totalAccountPaid.toLocaleString("zh-CN", {
                       minimumFractionDigits: 2,
@@ -340,7 +328,7 @@ const FinanceManagement = () => {
                     })}
                   </strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={11} colSpan={2} />
+                <ProTable.Summary.Cell index={7} colSpan={5} />
               </ProTable.Summary.Row>
             </>
           );

@@ -451,4 +451,23 @@ export async function deleteReviewLog(body, options) {
     });
 }
 
+// 导入预算接口
+export async function importBudget(body, options) {
+    return request('/api/business/budget/import', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        data: body,
+        ...(options || {}),
+    });
+}
 
+// 查询导入任务列表
+
+export async function findImportTasks(options) {
+    return request('/api/business/budget/import/find/tasks', {
+        method: 'GET',
+        ...(options || {}),
+    });
+}

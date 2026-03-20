@@ -158,20 +158,6 @@ const Contract = () => {
             hideInSearch: true,
         },
         {
-            title: "合同附件",
-            dataIndex: "contract_attachment",
-            width: 150,
-            hideInSearch: true,
-            render: (text) => {
-                if (!text) return "-";
-                return (
-                    <a href={text} target="_blank" rel="noopener noreferrer">
-                        查看附件
-                    </a>
-                );
-            },
-        },
-        {
             title: "创建时间",
             dataIndex: "create_time",
             valueType: "dateTime",

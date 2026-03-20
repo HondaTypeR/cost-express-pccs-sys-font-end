@@ -6,13 +6,32 @@ import {
   ProFormSelect,
   ProFormText,
   ProFormTextArea,
+  ProFormUploadButton,
 } from "@ant-design/pro-components";
+import { Image } from "antd";
 import { cloneElement, useRef, useState } from "react";
 
 const ViewForm = (props) => {
   const { values, trigger, suppliers, projects } = props;
   const formRef = useRef();
   const [open, setOpen] = useState(false);
+  const [imgPreview, setImgPreview] = useState({ visible: false, src: "" });
+
+  const parseAttachment = (raw) => {
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .map((x) => ({
+          fileUrl: String(x?.fileUrl || ""),
+          fileName: String(x?.fileName || ""),
+        }))
+        .filter((x) => x.fileUrl);
+    } catch {
+      return [];
+    }
+  };
 
   return (
     <>
@@ -35,6 +54,18 @@ const ViewForm = (props) => {
         initialValues={{
           ...values,
           party_b_id: values.party_b_id || values.party_b,
+          contract_attachment: (() => {
+            const files = parseAttachment(values.contract_attachment);
+            return files.map((f, idx) => ({
+              uid: `-attach-${idx}`,
+              name:
+                f.fileName ||
+                String(f.fileUrl).split("/").pop() ||
+                `附件${idx + 1}`,
+              status: "done",
+              url: f.fileUrl,
+            }));
+          })(),
         }}
         submitter={false}
         readonly
@@ -228,17 +259,51 @@ const ViewForm = (props) => {
             return null;
           }}
         </ProFormDependency>
-        {values.contract_attachment && (
-          <ProFormText label="合同附件">
-            <a
-              href={values.contract_attachment}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              查看附件
-            </a>
-          </ProFormText>
-        )}
+        <ProFormUploadButton
+          name="contract_attachment"
+          label="合同附件"
+          max={5}
+          disabled
+          fieldProps={{
+            name: "files",
+            listType: "text",
+            showUploadList: {
+              showDownloadIcon: true,
+              showRemoveIcon: false,
+              showPreviewIcon: true,
+            },
+            onPreview: (file) => {
+              const url =
+                file.url || file.response?.data?.fileList?.[0]?.fileUrl;
+              const name = String(file?.name || "").toLowerCase();
+              const type = String(file?.type || "");
+              const isPdf = type === "application/pdf" || name.endsWith(".pdf");
+              const isImage =
+                type.startsWith("image/") ||
+                /\.(png|jpe?g|gif|bmp|webp|svg)$/i.test(name);
+              if (!url) return;
+              if (isPdf) {
+                window.open(url, "_blank");
+                return;
+              }
+              if (isImage) {
+                setImgPreview({ visible: true, src: url });
+                return;
+              }
+              window.open(url, "_blank");
+            },
+          }}
+        />
+        <Image
+          src={imgPreview.src}
+          style={{ display: "none" }}
+          preview={{
+            visible: imgPreview.visible,
+            src: imgPreview.src,
+            onVisibleChange: (v) =>
+              setImgPreview((prev) => ({ ...prev, visible: v })),
+          }}
+        />
       </DrawerForm>
     </>
   );

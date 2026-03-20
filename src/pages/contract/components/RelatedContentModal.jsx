@@ -1,7 +1,7 @@
-import { AuditStatus, DocumentStatus } from "@/enum";
+import { AuditStatus, DocumentStatusContract } from "@/enum";
 import { getContractRelated } from "@/services/contract";
 import { ModalForm, ProTable } from "@ant-design/pro-components";
-import { Tabs } from "antd";
+import { message, Tabs } from "antd";
 import { cloneElement, useRef, useState } from "react";
 
 const RelatedContentModal = (props) => {
@@ -27,9 +27,11 @@ const RelatedContentModal = (props) => {
           artificials: res.data.artificial?.list || [],
           summary: res.data.summary || {},
         });
+      } else {
+        message.error(res.msg || "获取关联数据失败");
       }
     } catch (error) {
-      console.error("Failed to fetch related data:", error);
+      message.error(error.msg || "获取关联数据失败");
     } finally {
       setLoading(false);
     }
@@ -78,7 +80,7 @@ const RelatedContentModal = (props) => {
       dataIndex: "document_status",
       width: 100,
       valueType: "select",
-      valueEnum: DocumentStatus.reduce((acc, item) => {
+      valueEnum: DocumentStatusContract.reduce((acc, item) => {
         acc[item.value] = { text: item.label };
         return acc;
       }, {}),
@@ -128,7 +130,7 @@ const RelatedContentModal = (props) => {
       dataIndex: "document_status",
       width: 100,
       valueType: "select",
-      valueEnum: DocumentStatus.reduce((acc, item) => {
+      valueEnum: DocumentStatusContract.reduce((acc, item) => {
         acc[item.value] = { text: item.label };
         return acc;
       }, {}),
@@ -178,7 +180,7 @@ const RelatedContentModal = (props) => {
       dataIndex: "document_status",
       width: 100,
       valueType: "select",
-      valueEnum: DocumentStatus.reduce((acc, item) => {
+      valueEnum: DocumentStatusContract.reduce((acc, item) => {
         acc[item.value] = { text: item.label };
         return acc;
       }, {}),

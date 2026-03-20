@@ -6,12 +6,30 @@ import {
   ProFormText,
   ProFormUploadButton,
 } from "@ant-design/pro-components";
+import { Image } from "antd";
 import { cloneElement, useRef, useState } from "react";
 
 const ViewForm = (props) => {
   const { values, trigger, projects, suppliers, contracts, users } = props;
   const formRef = useRef();
   const [open, setOpen] = useState(false);
+  const [imgPreview, setImgPreview] = useState({ visible: false, src: "" });
+
+  const parseAcceptanceNote = (raw) => {
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .map((x) => ({
+          fileUrl: String(x?.fileUrl || ""),
+          fileName: String(x?.fileName || ""),
+        }))
+        .filter((x) => x.fileUrl);
+    } catch {
+      return [];
+    }
+  };
 
   return (
     <>
@@ -44,16 +62,18 @@ const ViewForm = (props) => {
                 .map((id) => Number(id.trim()));
             }
           })(),
-          acceptance_note: values.acceptance_note
-            ? [
-                {
-                  uid: "-1",
-                  name: values.acceptance_note.split("/").pop() || "验收说明",
-                  status: "done",
-                  url: values.acceptance_note,
-                },
-              ]
-            : [],
+          acceptance_note: (() => {
+            const files = parseAcceptanceNote(values.acceptance_note);
+            return files.map((f, idx) => ({
+              uid: `-acceptance-${idx}`,
+              name:
+                f.fileName ||
+                String(f.fileUrl).split("/").pop() ||
+                `验收说明${idx + 1}`,
+              status: "done",
+              url: f.fileUrl,
+            }));
+          })(),
         }}
         submitter={false}
         readonly
@@ -137,7 +157,7 @@ const ViewForm = (props) => {
         <ProFormUploadButton
           name="acceptance_note"
           label="验收说明"
-          max={1}
+          max={5}
           disabled
           fieldProps={{
             name: "files",
@@ -145,7 +165,38 @@ const ViewForm = (props) => {
             showUploadList: {
               showDownloadIcon: true,
               showRemoveIcon: false,
+              showPreviewIcon: true,
             },
+            onPreview: (file) => {
+              const url =
+                file.url || file.response?.data?.fileList?.[0]?.fileUrl;
+              const name = String(file?.name || "").toLowerCase();
+              const type = String(file?.type || "");
+              const isPdf = type === "application/pdf" || name.endsWith(".pdf");
+              const isImage =
+                type.startsWith("image/") ||
+                /\.(png|jpe?g|gif|bmp|webp|svg)$/i.test(name);
+              if (!url) return;
+              if (isPdf) {
+                window.open(url, "_blank");
+                return;
+              }
+              if (isImage) {
+                setImgPreview({ visible: true, src: url });
+                return;
+              }
+              window.open(url, "_blank");
+            },
+          }}
+        />
+        <Image
+          src={imgPreview.src}
+          style={{ display: "none" }}
+          preview={{
+            visible: imgPreview.visible,
+            src: imgPreview.src,
+            onVisibleChange: (v) =>
+              setImgPreview((prev) => ({ ...prev, visible: v })),
           }}
         />
       </DrawerForm>
