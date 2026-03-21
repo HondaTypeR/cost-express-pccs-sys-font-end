@@ -1,12 +1,15 @@
-import { PhaseNum } from "@/enum";
 import {
-  deleteComprehensive,
+  deleteImportedBudget,
+  findImportedBudgets,
   findImportTasks,
   importBudget,
-  listComprehensive,
   listProject,
 } from "@/services/business";
-import { PageContainer, ProTable } from "@ant-design/pro-components";
+import {
+  PageContainer,
+  ProFormSelect,
+  ProTable,
+} from "@ant-design/pro-components";
 import {
   Button,
   message,
@@ -21,7 +24,13 @@ import moment from "moment";
 import { useEffect, useRef, useState } from "react";
 import CreateForm from "./components/CreateForm";
 import UpdateForm from "./components/UpdateForm";
-import ViewForm from "./components/ViewForm";
+
+const TYPES = {
+  other: "其他",
+  jx: "机械",
+  cl: "材料",
+  rg: "人工",
+};
 
 const Comprehensive = () => {
   const actionRef = useRef(null);
@@ -29,9 +38,13 @@ const Comprehensive = () => {
   const [importOpen, setImportOpen] = useState(false);
   const [importFileList, setImportFileList] = useState([]);
   const [importing, setImporting] = useState(false);
+  const [importProjectId, setImportProjectId] = useState(undefined);
+  const [importTypes, setImportTypes] = useState("other");
+  const [importIssue, setImportIssue] = useState("all");
   const [tasksOpen, setTasksOpen] = useState(false);
   const [tasksLoading, setTasksLoading] = useState(false);
   const [tasks, setTasks] = useState([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   const fetchProjects = async () => {
     const res = await listProject();
@@ -52,6 +65,18 @@ const Comprehensive = () => {
   }, []);
 
   const handleImportOk = async () => {
+    if (!importProjectId) {
+      message.warning("请选择归属项目");
+      return;
+    }
+    if (!importTypes) {
+      message.warning("请选择类型");
+      return;
+    }
+    if (!importIssue) {
+      message.warning("请选择归属期数");
+      return;
+    }
     if (!importFileList || importFileList.length === 0) {
       message.warning("请先选择一个 Excel 文件");
       return;
@@ -70,13 +95,19 @@ const Comprehensive = () => {
     try {
       setImporting(true);
       const res = await importBudget({
-        project_id: 8, //TODO 待从项目选择中获取
+        project_id: importProjectId,
+        types: importTypes,
+        issue: importIssue,
         fileUrl: uploadedUrl,
       });
       if (res?.code === 200) {
         message.success(res?.msg || "导入任务已提交");
         setImportOpen(false);
         setImportFileList([]);
+        setImportProjectId(undefined);
+        setImportTypes("other");
+        setImportIssue("all");
+        actionRef.current?.reload();
       } else {
         message.error(res?.msg || "导入失败");
       }
@@ -90,6 +121,9 @@ const Comprehensive = () => {
   const handleImportCancel = () => {
     setImportOpen(false);
     setImportFileList([]);
+    setImportProjectId(undefined);
+    setImportTypes("other");
+    setImportIssue("all");
   };
 
   const fetchImportTasks = async () => {
@@ -119,44 +153,96 @@ const Comprehensive = () => {
 
   const columns = [
     {
-      title: "所属项目",
-      dataIndex: "project_id",
-      width: 200,
+      title: "序号",
+      dataIndex: "budget_id",
+      search: false,
+    },
+    {
+      title: "归属项目",
+      dataIndex: "project_name",
       valueType: "select",
+
+      search: {
+        transform: (value) => ({ project_id: value }),
+      },
       fieldProps: {
         options: projects,
       },
     },
     {
-      title: "项目内容",
-      dataIndex: "project_content",
-      width: 300,
-      ellipsis: true,
-    },
-    {
-      title: "期数",
-      dataIndex: "phase_num",
-      width: 150,
+      title: "归属期数",
+      dataIndex: "issue",
+      valueEnum: {
+        all: { text: "全部" },
+        1: { text: "一期" },
+        2: { text: "二期" },
+        3: { text: "三期" },
+        4: { text: "四期" },
+        5: { text: "五期" },
+      },
       render: (text, record) => {
-        if (!record.phase_num) return "-";
-        const phases = record.phase_num.split(",").map((p) => p.trim());
-        const phaseLabels = phases.map((phase) => {
-          const found = PhaseNum.find((item) => item.value === phase);
-          return found ? found.label : phase;
-        });
-        return phaseLabels.join("、");
+        const issueEnum = {
+          all: "全部",
+          1: "一期",
+          2: "二期",
+          3: "三期",
+          4: "四期",
+          5: "五期",
+        };
+        return issueEnum[record?.issue] || record?.issue;
       },
     },
     {
-      title: "具体部位",
-      dataIndex: "specific_part",
-      width: 200,
+      title: "类型",
+      dataIndex: "types",
+      valueEnum: {
+        other: { text: "其他" },
+        jx: { text: "机械" },
+        cl: { text: "材料" },
+        rg: { text: "人工" },
+      },
+      render: (text, record) => {
+        return TYPES[record?.types] || text;
+      },
+    },
+    {
+      title: "名称",
+      dataIndex: "name",
+    },
+    {
+      title: "规格型号",
+      dataIndex: "spec_model",
+    },
+    {
+      title: "单位",
+      dataIndex: "unit",
+      hideInSearch: true,
+    },
+    {
+      title: "数量",
+      dataIndex: "quantity",
+      hideInSearch: true,
+    },
+    {
+      title: "预算单价",
+      dataIndex: "budget_unit_price",
+      hideInSearch: true,
+    },
+    {
+      title: "预算总价",
+      dataIndex: "budget_total_price",
+      hideInSearch: true,
     },
     {
       title: "创建时间",
       dataIndex: "create_time",
       valueType: "dateTime",
-      width: 180,
+      hideInSearch: true,
+    },
+    {
+      title: "更新时间",
+      dataIndex: "update_time",
+      valueType: "dateTime",
       hideInSearch: true,
     },
     {
@@ -165,12 +251,6 @@ const Comprehensive = () => {
       width: 200,
       fixed: "right",
       render: (text, record) => [
-        <ViewForm
-          key="view"
-          values={record}
-          trigger={<a>查看</a>}
-          projects={projects}
-        />,
         <UpdateForm
           key="edit"
           values={record}
@@ -181,10 +261,10 @@ const Comprehensive = () => {
         <Popconfirm
           key="delete"
           title="确认删除"
-          description="确定要删除这条综合管理记录吗？删除后无法恢复。"
+          description="确定要删除这条预算吗？删除后无法恢复。"
           onConfirm={async () => {
-            const res = await deleteComprehensive({
-              comprehensive_id: record.comprehensive_id,
+            const res = await deleteImportedBudget({
+              budget_ids: [record.budget_id],
             });
             if (res.code === 200) {
               message.success("删除成功");
@@ -197,7 +277,7 @@ const Comprehensive = () => {
           cancelText="取消"
           okType="danger"
         >
-          <a>删除</a>
+          <a style={{ color: "red" }}>删除</a>
         </Popconfirm>,
       ],
     },
@@ -206,9 +286,10 @@ const Comprehensive = () => {
   return (
     <PageContainer>
       <ProTable
-        headerTitle="综合管理列表"
+        headerTitle="预算管理列表"
         actionRef={actionRef}
-        rowKey="comprehensive_id"
+        rowKey="budget_id"
+        rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
         search={{
           labelWidth: 120,
         }}
@@ -223,23 +304,70 @@ const Comprehensive = () => {
             }
             projects={projects}
           />,
-          <Button key="import" onClick={() => setImportOpen(true)}>
+          <Button
+            key="import"
+            onClick={() => {
+              setImportProjectId(undefined);
+              setImportTypes("other");
+              setImportIssue("all");
+              setImportFileList([]);
+              setImportOpen(true);
+            }}
+          >
             导入Excel
           </Button>,
           <Button key="importTasks" onClick={() => setTasksOpen(true)}>
-            导入任务
+            导入日志
           </Button>,
+          selectedRowKeys.length > 0 ? (
+            <Popconfirm
+              key="batchDelete"
+              title="确认批量删除"
+              description="确定要删除所选预算吗？删除后无法恢复。"
+              onConfirm={async () => {
+                const res = await deleteImportedBudget({
+                  budget_ids: selectedRowKeys,
+                });
+                if (res?.code === 200) {
+                  message.success("批量删除成功");
+                  setSelectedRowKeys([]);
+                  actionRef.current?.reload();
+                } else {
+                  message.error(res?.msg || "批量删除失败");
+                }
+              }}
+              okText="确认"
+              cancelText="取消"
+              okType="danger"
+            >
+              <Button danger>批量删除</Button>
+            </Popconfirm>
+          ) : (
+            <Button key="batchDeleteDisabled" danger disabled>
+              批量删除
+            </Button>
+          ),
         ]}
         request={async (params, sort, filter) => {
-          const res = await listComprehensive({
-            ...params,
-            page: params.current,
-            pageSize: params.pageSize,
+          const res = await findImportedBudgets({
+            params: {
+              ...params,
+              page: params.current,
+              pageSize: params.pageSize,
+            },
           });
+          if (res?.code === 200) {
+            return {
+              data: res.data?.list || [],
+              success: true,
+              total: res.data?.total || 0,
+            };
+          }
+          message.error(res?.msg || "获取数据失败");
           return {
-            data: res.data || [],
-            success: res.code === 200,
-            total: res.total || 0,
+            data: [],
+            success: false,
+            total: 0,
           };
         }}
         columns={columns}
@@ -254,7 +382,67 @@ const Comprehensive = () => {
         cancelText="取消"
         confirmLoading={importing}
         destroyOnHidden
+        width={800}
       >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: 12,
+            marginBottom: 12,
+          }}
+        >
+          <ProFormSelect
+            name="import_project_id"
+            label="归属项目"
+            placeholder="请选择"
+            options={projects}
+            fieldProps={{
+              value: importProjectId,
+              onChange: setImportProjectId,
+              allowClear: false,
+            }}
+            rules={[{ required: true, message: "请选择归属项目" }]}
+          />
+          <ProFormSelect
+            name="import_types"
+            label="类型"
+            placeholder="请选择"
+            options={[
+              { value: "other", label: "其他" },
+              { value: "jx", label: "机械" },
+              { value: "cl", label: "材料" },
+              { value: "rg", label: "人工" },
+            ]}
+            fieldProps={{
+              value: importTypes,
+              onChange: setImportTypes,
+              allowClear: false,
+            }}
+            initialValue="other"
+            rules={[{ required: true, message: "请选择类型" }]}
+          />
+          <ProFormSelect
+            name="import_issue"
+            label="归属期数"
+            placeholder="请选择"
+            options={[
+              { value: "all", label: "全部" },
+              { value: "1", label: "一期" },
+              { value: "2", label: "二期" },
+              { value: "3", label: "三期" },
+              { value: "4", label: "四期" },
+              { value: "5", label: "五期" },
+            ]}
+            fieldProps={{
+              value: importIssue,
+              onChange: setImportIssue,
+              allowClear: false,
+            }}
+            initialValue="all"
+            rules={[{ required: true, message: "请选择归属期数" }]}
+          />
+        </div>
         <Upload
           name="files"
           fileList={importFileList}
@@ -292,7 +480,7 @@ const Comprehensive = () => {
         </div>
       </Modal>
       <Modal
-        title="导入任务"
+        title="导入日志"
         open={tasksOpen}
         onCancel={() => setTasksOpen(false)}
         footer={[

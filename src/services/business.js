@@ -464,10 +464,50 @@ export async function importBudget(body, options) {
 }
 
 // 查询导入任务列表
-
 export async function findImportTasks(options) {
     return request('/api/business/budget/import/find/tasks', {
         method: 'GET',
+        ...(options || {}),
+    });
+}
+
+// 查询导入的预算列表
+export async function findImportedBudgets(options) {
+    return request('/api/business/budget/list', {
+        method: 'GET',
+        ...(options || {}),
+    });
+}
+// 更新导入的预算
+export async function updateImportedBudget(body, options) {
+    return request('/api/business/budget/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        data: body,
+        ...(options || {}),
+    });
+}
+// 删除导入的预算
+export async function deleteImportedBudget(body, options) {
+    return request('/api/business/budget/delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        data: body,
+        ...(options || {}),
+    });
+}
+// 新增导入的预算
+export async function addImportedBudget(body, options) {
+    return request('/api/business/budget/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        data: body,
         ...(options || {}),
     });
 }

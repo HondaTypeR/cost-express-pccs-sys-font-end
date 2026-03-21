@@ -91,6 +91,12 @@ const FinanceManagement = () => {
       },
     },
     {
+      title: "规格型号",
+      dataIndex: "spec_model",
+      width: 120,
+      hideInSearch: true,
+    },
+    {
       title: "供应商",
       dataIndex: "supplier",
       width: 200,
@@ -104,6 +110,30 @@ const FinanceManagement = () => {
       },
     },
     {
+      title: "期数",
+      dataIndex: "phase_num",
+      width: 100,
+      valueEnum: {
+        1: { text: "一期" },
+        2: { text: "二期" },
+        3: { text: "三期" },
+        4: { text: "四期" },
+        5: { text: "五期" },
+      },
+    },
+    {
+      title: "单位",
+      dataIndex: "unit",
+      width: 100,
+      hideInSearch: true,
+    },
+    {
+      title: "预算单位",
+      dataIndex: "budget_unit",
+      width: 100,
+      hideInSearch: true,
+    },
+    {
       title: "数量",
       dataIndex: "quantity",
       width: 100,
@@ -111,8 +141,21 @@ const FinanceManagement = () => {
       hideInSearch: true,
     },
     {
+      title: "预算数量",
+      dataIndex: "budget_quantity",
+      width: 100,
+      hideInSearch: true,
+    },
+    {
       title: "合同单价",
       dataIndex: "contract_unit_price",
+      width: 120,
+      valueType: "money",
+      hideInSearch: true,
+    },
+    {
+      title: "预算单价",
+      dataIndex: "budget_unit_price",
       width: 120,
       valueType: "money",
       hideInSearch: true,
@@ -124,13 +167,13 @@ const FinanceManagement = () => {
       valueType: "money",
       hideInSearch: true,
     },
-    // {
-    //   title: "总金额",
-    //   dataIndex: "total_amount",
-    //   width: 120,
-    //   valueType: "money",
-    //   hideInSearch: true,
-    // },
+    {
+      title: "预算总价",
+      dataIndex: "budget_total_price",
+      width: 120,
+      valueType: "money",
+      hideInSearch: true,
+    },
     {
       title: "待付款金额",
       dataIndex: "wait_account_paid",
@@ -170,12 +213,6 @@ const FinanceManagement = () => {
         mechanical: { text: "机械" },
         artificial: { text: "人工" },
       },
-    },
-    {
-      title: "单位",
-      dataIndex: "unit",
-      width: 100,
-      hideInSearch: true,
     },
     {
       title: "已关联付款单",
@@ -262,22 +299,31 @@ const FinanceManagement = () => {
         scroll={{ x: 1500 }}
         summary={(pageData) => {
           let totalQuantity = 0;
+          let totalBudgetQuantity = 0;
           let totalContractUnitPrice = 0;
+          let totalBudgetUnitPrice = 0;
           let totalContractTotalPrice = 0;
+          let totalBudgetTotalPrice = 0;
           let totalWaitAccountPaid = 0;
           let totalAccountPaid = 0;
 
           pageData.forEach(
             ({
               quantity,
+              budget_quantity,
               contract_unit_price,
+              budget_unit_price,
               contract_total_price,
+              budget_total_price,
               wait_account_paid,
               account_paid,
             }) => {
               totalQuantity += Number(quantity) || 0;
+              totalBudgetQuantity += Number(budget_quantity) || 0;
               totalContractUnitPrice += Number(contract_unit_price) || 0;
+              totalBudgetUnitPrice += Number(budget_unit_price) || 0;
               totalContractTotalPrice += Number(contract_total_price) || 0;
+              totalBudgetTotalPrice += Number(budget_total_price) || 0;
               totalWaitAccountPaid += Number(wait_account_paid) || 0;
               totalAccountPaid += Number(account_paid) || 0;
             }
@@ -286,13 +332,16 @@ const FinanceManagement = () => {
           return (
             <>
               <ProTable.Summary.Row>
-                <ProTable.Summary.Cell index={0} colSpan={2}>
+                <ProTable.Summary.Cell index={0} colSpan={6}>
                   <strong>合计</strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={2}>
+                <ProTable.Summary.Cell index={6}>
                   <strong>{totalQuantity.toLocaleString()}</strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={3}>
+                <ProTable.Summary.Cell index={7}>
+                  <strong>{totalBudgetQuantity.toLocaleString()}</strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={8}>
                   <strong style={{ color: "orange" }}>
                     ¥
                     {totalContractUnitPrice.toLocaleString("zh-CN", {
@@ -301,7 +350,16 @@ const FinanceManagement = () => {
                     })}
                   </strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={4}>
+                <ProTable.Summary.Cell index={9}>
+                  <strong style={{ color: "orange" }}>
+                    ¥
+                    {totalBudgetUnitPrice.toLocaleString("zh-CN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={10}>
                   <strong style={{ color: "blue" }}>
                     ¥
                     {totalContractTotalPrice.toLocaleString("zh-CN", {
@@ -310,7 +368,16 @@ const FinanceManagement = () => {
                     })}
                   </strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={5}>
+                <ProTable.Summary.Cell index={11}>
+                  <strong style={{ color: "blue" }}>
+                    ¥
+                    {totalBudgetTotalPrice.toLocaleString("zh-CN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                </ProTable.Summary.Cell>
+                <ProTable.Summary.Cell index={12}>
                   <strong style={{ color: "red" }}>
                     ¥
                     {totalWaitAccountPaid.toLocaleString("zh-CN", {
@@ -319,7 +386,7 @@ const FinanceManagement = () => {
                     })}
                   </strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={6}>
+                <ProTable.Summary.Cell index={13}>
                   <strong style={{ color: "green" }}>
                     ¥
                     {totalAccountPaid.toLocaleString("zh-CN", {
@@ -328,7 +395,7 @@ const FinanceManagement = () => {
                     })}
                   </strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={7} colSpan={5} />
+                <ProTable.Summary.Cell index={14} colSpan={4} />
               </ProTable.Summary.Row>
             </>
           );

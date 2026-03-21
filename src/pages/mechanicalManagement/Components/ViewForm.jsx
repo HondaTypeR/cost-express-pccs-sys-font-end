@@ -4,6 +4,7 @@ import {
   ProFormDigit,
   ProFormSelect,
   ProFormText,
+  ProFormTextArea,
   ProFormUploadButton,
 } from "@ant-design/pro-components";
 import { Image } from "antd";
@@ -101,6 +102,7 @@ const ViewForm = (props) => {
           readonly
         />
         <ProFormText name="material_name" label="机械名称" readonly />
+        <ProFormTextArea name="spec_model" label="规格型号" readonly />
         <ProFormText name="unit" label="单位" readonly />
         <ProFormDigit
           name="quantity"

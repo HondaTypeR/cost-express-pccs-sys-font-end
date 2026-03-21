@@ -5,6 +5,7 @@ import {
   ProFormDigit,
   ProFormSelect,
   ProFormText,
+  ProFormTextArea,
   ProFormUploadButton,
 } from "@ant-design/pro-components";
 import { useModel } from "@umijs/max";
@@ -145,6 +146,7 @@ const CreateForm = (props) => {
                   supplier_unit: Number(selectedContract.party_b_id),
                   phase_num: selectedContract.term,
                   material_name: selectedContract.machinery_name,
+                  spec_model: selectedContract.spec_model,
                 });
               }
             },
@@ -182,6 +184,17 @@ const CreateForm = (props) => {
             {
               required: true,
               message: "请输入机械名称",
+            },
+          ]}
+        />
+        <ProFormTextArea
+          name="spec_model"
+          label="规格型号"
+          placeholder="请输入规格型号"
+          rules={[
+            {
+              required: true,
+              message: "请输入规格型号",
             },
           ]}
         />

@@ -1,4 +1,4 @@
-import { AuditStatus, PhaseNum, WaitStatus } from "@/enum";
+import { AuditStatus, PhaseNum } from "@/enum";
 import {
   addReviewLog,
   approveMaterial,
@@ -93,6 +93,12 @@ const MaterialManagement = () => {
 
   const columns = [
     {
+      title: "序号",
+      dataIndex: "material_code",
+      width: 80,
+      search: false,
+    },
+    {
       title: "项目名称",
       dataIndex: "project_id",
       width: 200,
@@ -134,21 +140,29 @@ const MaterialManagement = () => {
       width: 200,
     },
     {
+      title: "规格型号",
+      dataIndex: "spec_model",
+      width: 200,
+    },
+    {
       title: "单位",
       dataIndex: "unit",
       width: 100,
+      hideInSearch: true,
     },
     {
       title: "数量",
       dataIndex: "quantity",
       width: 120,
       valueType: "digit",
+      hideInSearch: true,
     },
     {
       title: "单价(元)",
       dataIndex: "unit_price",
       width: 120,
       valueType: "money",
+      hideInSearch: true,
     },
     {
       title: "合价(元)",
@@ -205,7 +219,24 @@ const MaterialManagement = () => {
       width: 120,
       valueType: "select",
       fieldProps: {
-        options: WaitStatus,
+        options: [
+          {
+            label: "草稿",
+            value: 0,
+          },
+          {
+            label: "已提交",
+            value: 1,
+          },
+          {
+            label: "已验收",
+            value: 2,
+          },
+          {
+            label: "已归档",
+            value: 3,
+          },
+        ],
       },
       render: (text, record) => {
         return record?.document_status_text || "-";
@@ -481,9 +512,11 @@ const MaterialManagement = () => {
         ]}
         request={async (params, sort, filter) => {
           const res = await listMaterial({
-            ...params,
-            page: params.current,
-            pageSize: params.pageSize,
+            params: {
+              ...params,
+              page: params.current,
+              pageSize: params.pageSize,
+            },
           });
           return {
             data: res.data || [],
@@ -519,14 +552,16 @@ const MaterialManagement = () => {
           return (
             <>
               <ProTable.Summary.Row>
-                <ProTable.Summary.Cell index={0} colSpan={4}>
+                {/* 合并从 序号 到 单位 共7列，使数值正好对齐在 数量 及其后面 */}
+                <ProTable.Summary.Cell index={0} colSpan={7}>
                   <strong>合计</strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={4} />
-                <ProTable.Summary.Cell index={5}>
+                {/* 数量 */}
+                <ProTable.Summary.Cell index={7}>
                   <strong>{totalQuantity.toLocaleString()}</strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={6}>
+                {/* 单价(元) 合计/汇总值（当前实现为求和，后续如需改为平均可再调整）*/}
+                <ProTable.Summary.Cell index={8}>
                   <strong>
                     ¥
                     {totalUnitPrice.toLocaleString("zh-CN", {
@@ -535,7 +570,8 @@ const MaterialManagement = () => {
                     })}
                   </strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={7}>
+                {/* 合价(元) */}
+                <ProTable.Summary.Cell index={9}>
                   <strong>
                     ¥
                     {totalPrice.toLocaleString("zh-CN", {
@@ -544,7 +580,8 @@ const MaterialManagement = () => {
                     })}
                   </strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={8}>
+                {/* 已付款金额 */}
+                <ProTable.Summary.Cell index={10}>
                   <strong>
                     ¥
                     {totalAccountPaid.toLocaleString("zh-CN", {
@@ -553,7 +590,8 @@ const MaterialManagement = () => {
                     })}
                   </strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={9}>
+                {/* 未付款金额 */}
+                <ProTable.Summary.Cell index={11}>
                   <strong>
                     ¥
                     {totalWaitAccountPaid.toLocaleString("zh-CN", {
@@ -562,7 +600,8 @@ const MaterialManagement = () => {
                     })}
                   </strong>
                 </ProTable.Summary.Cell>
-                <ProTable.Summary.Cell index={10} colSpan={5} />
+                {/* 关联合同-操作 等剩余 6 列 */}
+                <ProTable.Summary.Cell index={12} colSpan={6} />
               </ProTable.Summary.Row>
             </>
           );

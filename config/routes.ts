@@ -65,7 +65,7 @@ export default [
     component: './contract',
   },
    {
-    name: '综合管理',
+    name: '预算管理',
     icon: 'HighlightOutlined',
     path: '/comprehensive',
     component: './comprehensive',

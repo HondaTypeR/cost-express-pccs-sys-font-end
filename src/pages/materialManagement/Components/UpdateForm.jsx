@@ -175,6 +175,7 @@ const UpdateForm = (props) => {
                   supplier_unit: Number(selectedContract.party_b_id),
                   phase_num: selectedContract.term,
                   material_name: selectedContract.material_name,
+                  spec_model: selectedContract.spec_model,
                 });
               }
             },
@@ -221,6 +222,17 @@ const UpdateForm = (props) => {
             {
               required: true,
               message: "请输入材料名称",
+            },
+          ]}
+        />
+        <ProFormTextArea
+          name="spec_model"
+          label="规格型号"
+          placeholder="请输入规格型号"
+          rules={[
+            {
+              required: true,
+              message: "请输入规格型号",
             },
           ]}
         />

@@ -102,6 +102,7 @@ const ViewForm = (props) => {
           readonly
         />
         <ProFormTextArea name="material_name" label="材料名称" readonly />
+        <ProFormTextArea name="spec_model" label="规格型号" readonly />
         <ProFormText name="unit" label="单位" readonly />
         <ProFormDigit
           name="quantity"

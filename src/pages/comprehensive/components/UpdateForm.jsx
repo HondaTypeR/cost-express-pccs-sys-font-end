@@ -1,94 +1,24 @@
-import { PhaseNum } from "@/enum";
-import { updateComprehensive } from "@/services/business";
+import { updateImportedBudget } from "@/services/business";
 import {
   DrawerForm,
+  ProFormDigit,
   ProFormSelect,
-  ProFormTextArea,
+  ProFormText,
 } from "@ant-design/pro-components";
 import { message } from "antd";
-import { cloneElement, useEffect, useRef, useState } from "react";
+import { cloneElement, useRef, useState } from "react";
 
 const UpdateForm = (props) => {
   const { onOk, values, trigger, projects } = props;
+  console.log("🚀 ~ UpdateForm ~ projects:", projects);
   const formRef = useRef();
   const [open, setOpen] = useState(false);
-  const [budgetOptions, setBudgetOptions] = useState([]);
-  const [allBudgetInfo, setAllBudgetInfo] = useState([]);
-
-  // 当打开表单时，加载项目的预算信息
-  useEffect(() => {
-    if (open && values.project_id) {
-      loadProjectBudgetInfo(values.project_id);
-    }
-  }, [open, values.project_id]);
-
-  const loadProjectBudgetInfo = (projectId) => {
-    const project = projects.find((p) => p.value === projectId);
-    if (project) {
-      const budgetInfo = project.additional_info1
-        ? JSON.parse(project.additional_info1)
-        : [];
-
-      // 保存完整的预算信息
-      setAllBudgetInfo(budgetInfo);
-
-      // 根据当前选择的期数过滤建筑位置
-      const currentPhase = values.phase_num;
-      if (currentPhase) {
-        const filtered = budgetInfo.filter(
-          (item) => item.phase_num === currentPhase
-        );
-        setBudgetOptions(
-          filtered.map((item) => ({
-            value: item.position,
-            label: item.position,
-            phase_num: item.phase_num,
-          }))
-        );
-      } else {
-        setBudgetOptions(
-          budgetInfo.map((item) => ({
-            value: item.position,
-            label: item.position,
-            phase_num: item.phase_num,
-          }))
-        );
-      }
-    }
-  };
-
-  // 当选择期数时，过滤具体部位选项
-  const handlePhaseChange = (phaseNum) => {
-    if (!phaseNum) {
-      // 如果没有选择期数，显示所有建筑位置
-      setBudgetOptions(
-        allBudgetInfo.map((item) => ({
-          value: item.position,
-          label: item.position,
-          phase_num: item.phase_num,
-        }))
-      );
-    } else {
-      // 根据选择的期数过滤建筑位置
-      const filtered = allBudgetInfo.filter(
-        (item) => item.phase_num === phaseNum
-      );
-      setBudgetOptions(
-        filtered.map((item) => ({
-          value: item.position,
-          label: item.position,
-          phase_num: item.phase_num,
-        }))
-      );
-    }
-    // 清空具体部位的选择
-    formRef.current?.setFieldsValue({ specific_part: undefined });
-  };
+  // 预算编辑：无需联动筛选
 
   return (
     <>
       <DrawerForm
-        title="编辑综合管理记录"
+        title="编辑预算"
         formRef={formRef}
         open={open}
         trigger={cloneElement(trigger, {
@@ -103,15 +33,22 @@ const UpdateForm = (props) => {
         }}
         initialValues={{
           ...values,
+          project_id:
+            values?.project_id != null ? String(values.project_id) : undefined,
+          issue: values?.issue != null ? String(values.issue) : undefined,
         }}
         onFinish={async (value) => {
+          const projectItem = (projects || []).find(
+            (p) => String(p.value) === String(value.project_id)
+          );
           const params = {
             ...value,
+            project_id: String(value.project_id),
+            budget_id: values.budget_id,
             comprehensive_id: values.comprehensive_id,
-            project_name: projects.find((p) => p.value === value.project_id)
-              ?.project_name,
+            project_name: projectItem?.project_name || projectItem?.label,
           };
-          const res = await updateComprehensive(params);
+          const res = await updateImportedBudget(params);
 
           if (res.code === 200) {
             message.success(res?.msg || "更新成功");
@@ -126,57 +63,69 @@ const UpdateForm = (props) => {
       >
         <ProFormSelect
           name="project_id"
-          label="所属项目"
+          label="归属项目"
           placeholder="请选择项目"
-          options={projects}
-          disabled
-          rules={[
-            {
-              required: true,
-              message: "请选择项目",
-            },
-          ]}
-        />
-        <ProFormTextArea
-          name="project_content"
-          label="项目内容"
-          placeholder="请输入项目内容"
-          fieldProps={{
-            rows: 4,
-          }}
-          rules={[
-            {
-              required: true,
-              message: "请输入项目内容",
-            },
-          ]}
+          options={projects?.map((p) => ({
+            value: String(p.value),
+            label: p.label,
+          }))}
+          rules={[{ required: true, message: "请选择项目" }]}
         />
         <ProFormSelect
-          name="phase_num"
-          label="期数"
+          name="types"
+          label="类型"
+          placeholder="请选择类型"
+          options={[
+            { value: "other", label: "其他" },
+            { value: "jx", label: "机械" },
+            { value: "cl", label: "材料" },
+            { value: "rg", label: "人工" },
+          ]}
+          rules={[{ required: true, message: "请选择类型" }]}
+        />
+        <ProFormSelect
+          name="issue"
+          label="归属期数"
           placeholder="请选择期数"
-          options={PhaseNum}
-          fieldProps={{
-            onChange: handlePhaseChange,
-          }}
-          rules={[
-            {
-              required: true,
-              message: "请选择期数",
-            },
+          options={[
+            { value: "all", label: "全部" },
+            { value: "1", label: "一期" },
+            { value: "2", label: "二期" },
+            { value: "3", label: "三期" },
+            { value: "4", label: "四期" },
+            { value: "5", label: "五期" },
           ]}
+          rules={[{ required: true, message: "请选择期数" }]}
         />
-        <ProFormSelect
-          name="specific_part"
-          label="具体部位"
-          placeholder="请选择具体部位"
-          options={budgetOptions}
-          rules={[
-            {
-              required: true,
-              message: "请选择具体部位",
-            },
-          ]}
+        <ProFormText
+          name="name"
+          label="名称"
+          placeholder="请输入名称"
+          rules={[{ required: true, message: "请输入名称" }]}
+        />
+        <ProFormText
+          name="spec_model"
+          label="规格型号"
+          placeholder="请输入规格型号"
+        />
+        <ProFormText name="unit" label="单位" placeholder="请输入单位" />
+        <ProFormDigit
+          name="quantity"
+          label="数量"
+          placeholder="请输入数量"
+          rules={[{ required: true, message: "请输入数量" }]}
+        />
+        <ProFormDigit
+          name="budget_unit_price"
+          label="预算单价"
+          placeholder="请输入预算单价"
+          fieldProps={{ precision: 2 }}
+        />
+        <ProFormDigit
+          name="budget_total_price"
+          label="预算总价"
+          placeholder="请输入预算总价"
+          fieldProps={{ precision: 2 }}
         />
       </DrawerForm>
     </>
