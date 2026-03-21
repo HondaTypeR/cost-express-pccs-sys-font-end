@@ -2,6 +2,7 @@ import { AvatarDropdown, AvatarName, Footer } from "@/components";
 import { getUserMenus } from "@/services/menu.js";
 import { currentUser as queryCurrentUser } from "@/services/userInfo.js";
 import {
+  DashboardOutlined,
   DeploymentUnitOutlined,
   DiffOutlined,
   DropboxOutlined,
@@ -36,6 +37,7 @@ const iconMap = {
   DeploymentUnitOutlined: <DeploymentUnitOutlined />,
   DropboxOutlined: <DropboxOutlined />,
   PropertySafetyOutlined: <PropertySafetyOutlined />,
+  DashboardOutlined: <DashboardOutlined />,
 };
 
 /**

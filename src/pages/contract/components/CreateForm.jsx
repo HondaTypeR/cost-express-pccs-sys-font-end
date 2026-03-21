@@ -236,7 +236,6 @@ const CreateForm = (props) => {
         />
         <ProFormDependency name={["contract_amount"]}>
           {({ contract_amount }) => {
-            console.log("🚀 ~ CreateForm ~ contract_amount:", contract_amount);
             if (
               contract_amount === undefined ||
               contract_amount === null ||

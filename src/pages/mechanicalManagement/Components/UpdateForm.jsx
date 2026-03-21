@@ -278,7 +278,6 @@ const UpdateForm = (props) => {
           label="经办人"
           readonly
           convertValue={(value) => {
-            console.log("🚀 ~ UpdateForm ~ users:", users);
             const user = users?.find((u) => u.value == value);
 
             return user ? user.label : value;

@@ -10,7 +10,6 @@ import { cloneElement, useRef, useState } from "react";
 
 const UpdateForm = (props) => {
   const { onOk, values, trigger, projects } = props;
-  console.log("🚀 ~ UpdateForm ~ projects:", projects);
   const formRef = useRef();
   const [open, setOpen] = useState(false);
   // 预算编辑：无需联动筛选

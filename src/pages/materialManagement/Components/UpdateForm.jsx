@@ -48,7 +48,6 @@ const UpdateForm = (props) => {
     setUnitPrice(value || 0);
     calculateTotalPrice(quantity, value || 0);
   };
-  console.log("🚀 ~ UpdateForm ~ values:", values);
 
   const parseAcceptanceNote = (raw) => {
     if (!raw) return [];

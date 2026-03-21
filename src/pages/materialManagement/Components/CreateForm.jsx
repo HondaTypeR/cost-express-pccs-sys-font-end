@@ -51,7 +51,6 @@ const CreateForm = (props) => {
     calculateTotalPrice(quantity, value || 0);
   };
 
-  console.log("🚀 ~ CreateForm ~ contracts:", contracts);
   return (
     <>
       <DrawerForm

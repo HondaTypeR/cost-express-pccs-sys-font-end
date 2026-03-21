@@ -29,6 +29,12 @@ export default [
     component: './welcome',
   },
   {
+    name: '数据看板',
+    icon: 'DashboardOutlined',
+    path: '/dashboard',
+    component: './dashboard',
+  },
+  {
     name: '人员管理',
     icon: 'TeamOutlined',
     path: '/personnel',

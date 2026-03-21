@@ -471,6 +471,13 @@ export async function findImportTasks(options) {
     });
 }
 
+// 查询项目成本饼图数据
+export async function findProjectCostPie(options) {
+    return request('/api/business/analytics/project-cost-pie', {
+        method: 'GET',
+        ...(options || {}),
+    });
+}
 // 查询导入的预算列表
 export async function findImportedBudgets(options) {
     return request('/api/business/budget/list', {
