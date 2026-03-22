@@ -13,10 +13,11 @@ export const MenuOptions = [
 ]
 
 export const Departments = [
-    { label: "财务部", value: '0' },
-    { label: "工程部", value: '1' },
-    { label: "商务部", value: '2' },
-    { label: "市场部", value: '3' },
+    { label: "综合办", value: '0' },
+    { label: "成本部", value: '1' },
+    { label: "工程部", value: '2' },
+    { label: "销售部", value: '3' },
+    { label: "采购部", value: '4' },
 ]
 
 export const Roles = [
